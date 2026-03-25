@@ -2,6 +2,7 @@ package generator_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,12 +104,17 @@ func TestAutoDescription_WithTokens(t *testing.T) {
 func TestAutoDescription_TokensTruncateAt10(t *testing.T) {
 	rule := makeRule("Avoid", "existence", "error")
 	for i := 0; i < 15; i++ {
-		rule.Tokens = append(rule.Tokens, "tok")
+		rule.Tokens = append(rule.Tokens, fmt.Sprintf("tok%d", i))
 	}
 	desc := generator.AutoDescription(rule)
-	// Should not error, and should include truncation hint or just first 10
-	if desc == "" {
-		t.Error("expected non-empty description")
+	if !strings.Contains(desc, "tok9") {
+		t.Errorf("should include 10th token tok9: %q", desc)
+	}
+	if strings.Contains(desc, "tok10") {
+		t.Errorf("should not include 11th token tok10: %q", desc)
+	}
+	if !strings.Contains(desc, "...") {
+		t.Errorf("should include truncation marker: %q", desc)
 	}
 }
 
@@ -562,12 +568,4 @@ func TestAssignCategories_UnassignedFallsBackToExtends(t *testing.T) {
 	if rules[0].Category != "spelling" {
 		t.Errorf("unassigned rule should fall back to extends %q, got: %q", "spelling", rules[0].Category)
 	}
-}
-
-// min is a helper for Go <1.21 compatibility.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

@@ -146,24 +146,31 @@ type frontmatterData struct {
 	Scope      string            `yaml:"scope,omitempty"`
 	Ignorecase bool              `yaml:"ignorecase,omitempty"`
 	Nonword    bool              `yaml:"nonword,omitempty"`
+	Raw        []string          `yaml:"raw,omitempty"`
 	Tokens     []string          `yaml:"tokens,omitempty"`
 	Swap       map[string]string `yaml:"swap,omitempty"`
+	// Action fields (flattened from Action struct)
+	ActionName   string   `yaml:"action_name,omitempty"`
+	ActionParams []string `yaml:"action_params,omitempty"`
 	// Type-specific fields
-	First      string            `yaml:"first,omitempty"`
-	Second     string            `yaml:"second,omitempty"`
-	Exceptions []string          `yaml:"exceptions,omitempty"`
-	Match      string            `yaml:"match,omitempty"`
-	Indicators []string          `yaml:"indicators,omitempty"`
-	Max        int               `yaml:"max,omitempty"`
-	Min        int               `yaml:"min,omitempty"`
-	Token      string            `yaml:"token,omitempty"`
-	Alpha      bool              `yaml:"alpha,omitempty"`
-	Formula    string            `yaml:"formula,omitempty"`
-	Condition  string            `yaml:"condition,omitempty"`
-	Pattern    string            `yaml:"pattern,omitempty"`
-	Script     string            `yaml:"script,omitempty"`
-	Either     map[string]string `yaml:"either,omitempty"`
-	Vocab      bool              `yaml:"vocab,omitempty"`
+	First        string            `yaml:"first,omitempty"`
+	Second       string            `yaml:"second,omitempty"`
+	Exceptions   []string          `yaml:"exceptions,omitempty"`
+	Match        string            `yaml:"match,omitempty"`
+	Indicators   []string          `yaml:"indicators,omitempty"`
+	Max          int               `yaml:"max,omitempty"`
+	Min          int               `yaml:"min,omitempty"`
+	Token        string            `yaml:"token,omitempty"`
+	Alpha        bool              `yaml:"alpha,omitempty"`
+	Formula      string            `yaml:"formula,omitempty"`
+	Condition    string            `yaml:"condition,omitempty"`
+	Pattern      string            `yaml:"pattern,omitempty"`
+	Script       string            `yaml:"script,omitempty"`
+	Either       map[string]string `yaml:"either,omitempty"`
+	Vocab        bool              `yaml:"vocab,omitempty"`
+	Dictionaries []string          `yaml:"dictionaries,omitempty"`
+	Custom       bool              `yaml:"custom,omitempty"`
+	Filters      []string          `yaml:"filters,omitempty"`
 	// Taxonomy terms (Hugo lowercases all param keys automatically)
 	Categories []string `yaml:"categories"`
 	Ruletypes  []string `yaml:"ruletypes"`
@@ -178,34 +185,43 @@ func BuildFrontmatter(rule *parser.ValeRule) (string, error) {
 	categories := categoriesFromRule(rule)
 
 	data := frontmatterData{
-		Title:      title,
-		Extends:    rule.Extends,
-		Level:      rule.Level,
-		Message:    rule.Message,
-		Link:       rule.Link,
-		Scope:      rule.Scope,
-		Ignorecase: rule.Ignorecase,
-		Nonword:    rule.Nonword,
-		Tokens:     rule.Tokens,
-		Swap:       rule.Swap,
-		First:      rule.First,
-		Second:     rule.Second,
-		Exceptions: rule.Exceptions,
-		Match:      rule.Match,
-		Indicators: rule.Indicators,
-		Max:        rule.Max,
-		Min:        rule.Min,
-		Token:      rule.Token,
-		Alpha:      rule.Alpha,
-		Formula:    rule.Formula,
-		Condition:  rule.Condition,
-		Pattern:    rule.Pattern,
-		Script:     rule.Script,
-		Either:     rule.Either,
-		Vocab:      rule.Vocab,
-		Categories: categories,
-		Ruletypes:  []string{rule.Extends},
-		Severities: []string{rule.Level},
+		Title:        title,
+		Extends:      rule.Extends,
+		Level:        rule.Level,
+		Message:      rule.Message,
+		Link:         rule.Link,
+		Scope:        rule.Scope,
+		Ignorecase:   rule.Ignorecase,
+		Nonword:      rule.Nonword,
+		Raw:          rule.Raw,
+		Tokens:       rule.Tokens,
+		Swap:         rule.Swap,
+		First:        rule.First,
+		Second:       rule.Second,
+		Exceptions:   rule.Exceptions,
+		Match:        rule.Match,
+		Indicators:   rule.Indicators,
+		Max:          rule.Max,
+		Min:          rule.Min,
+		Token:        rule.Token,
+		Alpha:        rule.Alpha,
+		Formula:      rule.Formula,
+		Condition:    rule.Condition,
+		Pattern:      rule.Pattern,
+		Script:       rule.Script,
+		Either:       rule.Either,
+		Vocab:        rule.Vocab,
+		Dictionaries: rule.Dictionaries,
+		Custom:       rule.Custom,
+		Filters:      rule.Filters,
+		Categories:   categories,
+		Ruletypes:    []string{rule.Extends},
+		Severities:   []string{rule.Level},
+	}
+
+	if rule.Action != nil {
+		data.ActionName = rule.Action.Name
+		data.ActionParams = rule.Action.Params
 	}
 
 	out, err := yaml.Marshal(data)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/larah/rulebound/internal/config"
@@ -49,6 +50,9 @@ func GenerateRule(rule *parser.ValeRule, outDir string) error {
 //	└── data/
 //	    └── site.json
 func GenerateSite(rules []*parser.ValeRule, cfg *config.Config, outputDir string) error {
+	// Assign categories from config before generating content.
+	AssignCategories(rules, cfg)
+
 	// Create directory structure.
 	rulesDir := filepath.Join(outputDir, "content", "rules")
 	dataDir := filepath.Join(outputDir, "data")
@@ -107,6 +111,7 @@ func AssignCategories(rules []*parser.ValeRule, cfg *config.Config) {
 
 	for _, rule := range rules {
 		if cats, ok := catsByRule[rule.Name]; ok {
+			sort.Strings(cats)
 			rule.Category = strings.Join(cats, ",")
 		} else {
 			rule.Category = rule.Extends
