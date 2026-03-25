@@ -1,0 +1,133 @@
+{{- define "main" -}}
+{{- $p := .Params -}}
+{{- $data := index hugo.Data "site" -}}
+
+<div class="home-page">
+
+  {{- /* Hero section */ -}}
+  <section class="hero">
+    <h1 class="hero-title">{{ .Title | default site.Title }}</h1>
+    {{- with $p.description | default site.Params.description -}}
+      <p class="hero-description">{{ . }}</p>
+    {{- end -}}
+
+    <div class="hero-stats">
+      {{- $total := $p.total_rules | default 0 -}}
+      <div class="hero-stat">
+        <span class="hero-stat-value">{{ $total }}</span>
+        <span class="hero-stat-label">Rules</span>
+      </div>
+
+      {{- with $p.by_severity -}}
+        {{- range $level, $count := . -}}
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ $count }}</span>
+            <span class="hero-stat-label">{{ partial "severity-badge.html" $level }}</span>
+          </div>
+        {{- end -}}
+      {{- end -}}
+    </div>
+
+    <div class="hero-actions">
+      <a href="{{ "/rules/" | relURL }}" class="btn btn-primary">Browse All Rules</a>
+    </div>
+  </section>
+
+  {{- /* ── Charts / breakdown ────────────────────────────────────────── */ -}}
+  <div class="home-grid">
+
+    {{- /* Severity breakdown */ -}}
+    {{- with $p.by_severity -}}
+      <section class="home-card">
+        <h2>By Severity</h2>
+        <ul class="breakdown-list">
+          {{- $total := $p.total_rules | default 1 -}}
+          {{- range $level, $count := . -}}
+            <li class="breakdown-item">
+              <div class="breakdown-header">
+                <a href="{{ (printf "/severities/%s/" ($level | urlize)) | relURL }}">
+                  {{- partial "severity-badge.html" $level -}}
+                </a>
+                <span class="breakdown-count">{{ $count }}</span>
+              </div>
+              <div class="breakdown-bar-track">
+                {{- $pct := mul (div (float $count) (float $total)) 100 -}}
+                <div class="breakdown-bar breakdown-bar--{{ $level }}" style="width: {{ printf "%.1f" $pct }}%"></div>
+              </div>
+            </li>
+          {{- end -}}
+        </ul>
+      </section>
+    {{- end -}}
+
+    {{- /* Rule type breakdown */ -}}
+    {{- with $p.by_type -}}
+      <section class="home-card">
+        <h2>By Rule Type</h2>
+        <ul class="breakdown-list">
+          {{- $total := $p.total_rules | default 1 -}}
+          {{- range $type, $count := . -}}
+            <li class="breakdown-item">
+              <div class="breakdown-header">
+                <a href="{{ (printf "/ruletypes/%s/" ($type | urlize)) | relURL }}" class="type-badge">{{ $type }}</a>
+                <span class="breakdown-count">{{ $count }}</span>
+              </div>
+              <div class="breakdown-bar-track">
+                {{- $pct := mul (div (float $count) (float $total)) 100 -}}
+                <div class="breakdown-bar breakdown-bar--type" style="width: {{ printf "%.1f" $pct }}%"></div>
+              </div>
+            </li>
+          {{- end -}}
+        </ul>
+      </section>
+    {{- end -}}
+
+    {{- /* Category quick links */ -}}
+    {{- with $p.by_category -}}
+      <section class="home-card home-card--wide">
+        <h2>Quick Links by Category</h2>
+        <div class="category-grid">
+          {{- range $cat, $count := . -}}
+            <a href="{{ (printf "/categories/%s/" ($cat | urlize)) | relURL }}" class="category-card">
+              <span class="category-card-name">{{ $cat }}</span>
+              <span class="category-card-count">{{ $count }} rule{{ if gt $count 1 }}s{{ end }}</span>
+            </a>
+          {{- end -}}
+        </div>
+      </section>
+    {{- end -}}
+
+  </div>
+
+  {{- /* Recent / all rules shortcut */ -}}
+  <section class="home-all-rules">
+    <h2>All Rules</h2>
+    {{- $allRules := where site.RegularPages "Section" "rules" -}}
+    {{- if $allRules -}}
+      <table class="rule-table">
+        <thead>
+          <tr>
+            <th scope="col">Rule</th>
+            <th scope="col">Type</th>
+            <th scope="col">Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{- range $allRules.ByTitle -}}
+            {{- $rp := .Params -}}
+            <tr>
+              <td><a href="{{ .RelPermalink }}" class="rule-link">{{ .Title }}</a></td>
+              <td>
+                <a href="{{ (printf "/ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
+              </td>
+              <td>{{ partial "severity-badge.html" ($rp.level | default "suggestion") }}</td>
+            </tr>
+          {{- end -}}
+        </tbody>
+      </table>
+    {{- end -}}
+  </section>
+
+</div>
+
+{{- end -}}

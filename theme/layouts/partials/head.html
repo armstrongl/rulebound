@@ -1,0 +1,25 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Hugo {{ hugo.Version }}">
+
+{{- with .Title }}
+<title>{{ . }} | {{ site.Title }}</title>
+{{- else }}
+<title>{{ site.Title }}</title>
+{{- end }}
+
+{{- $desc := .Description | default site.Params.description -}}
+{{- with $desc }}
+<meta name="description" content="{{ . }}">
+{{- end }}
+
+{{- /* Open Graph */ -}}
+<meta property="og:title" content="{{ with .Title }}{{ . }} | {{ end }}{{ site.Title }}">
+<meta property="og:type" content="website">
+{{- with site.BaseURL }}<meta property="og:url" content="{{ . }}">{{ end }}
+
+{{- /* Canonical URL */ -}}
+<link rel="canonical" href="{{ .Permalink }}">
+
+{{- /* Theme stylesheet */ -}}
+<link rel="stylesheet" href="{{ "css/style.css" | relURL }}">

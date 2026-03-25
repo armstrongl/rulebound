@@ -1,0 +1,296 @@
+{{- /*
+  rule-details.html
+  Renders type-specific rule details from frontmatter.
+  Receives the page (.) with all .Params populated.
+
+  Handles:
+    existence      — token list (collapsible if > 20), raw patterns
+    substitution   — swap table (collapsible if > 20 entries)
+    conditional    — first/second regex, exceptions
+    capitalization — match style, indicators, exceptions
+    occurrence     — min/max, token regex
+    repetition     — max, alpha flag
+    consistency    — either map
+    metric         — formula, condition
+    sequence       — pattern
+    script         — script body
+    spelling       — vocab, dictionaries, custom, filters
+*/ -}}
+
+{{- $p := .Params -}}
+{{- $extends := $p.extends | default "" -}}
+
+{{- /* ── Existence ──────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "existence" -}}
+
+  {{- with $p.tokens -}}
+    <section class="rule-section">
+      <h3>Flagged Tokens</h3>
+      {{- $count := len . -}}
+      {{- if gt $count 20 -}}
+        <details class="collapsible">
+          <summary>{{ $count }} tokens <span class="collapsible-hint">(click to expand)</span></summary>
+          <ul class="token-list">
+            {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+          </ul>
+        </details>
+      {{- else -}}
+        <ul class="token-list">
+          {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+        </ul>
+      {{- end -}}
+    </section>
+  {{- end -}}
+
+  {{- with $p.raw -}}
+    <section class="rule-section">
+      <h3>Raw Patterns</h3>
+      <ul class="token-list token-list--mono">
+        {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+      </ul>
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Substitution ────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "substitution" -}}
+
+  {{- with $p.swap -}}
+    <section class="rule-section">
+      <h3>Replacement Table</h3>
+      {{- $count := len . -}}
+      {{- if gt $count 20 -}}
+        <details class="collapsible">
+          <summary>{{ $count }} substitutions <span class="collapsible-hint">(click to expand)</span></summary>
+          <table class="swap-table">
+            <thead><tr><th>Avoid</th><th>Prefer</th></tr></thead>
+            <tbody>
+              {{- range $avoid, $prefer := . -}}
+                <tr><td><code>{{ $avoid }}</code></td><td><code>{{ $prefer }}</code></td></tr>
+              {{- end -}}
+            </tbody>
+          </table>
+        </details>
+      {{- else -}}
+        <table class="swap-table">
+          <thead><tr><th>Avoid</th><th>Prefer</th></tr></thead>
+          <tbody>
+            {{- range $avoid, $prefer := . -}}
+              <tr><td><code>{{ $avoid }}</code></td><td><code>{{ $prefer }}</code></td></tr>
+            {{- end -}}
+          </tbody>
+        </table>
+      {{- end -}}
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Conditional ──────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "conditional" -}}
+
+  {{- with $p.first -}}
+    <section class="rule-section">
+      <h3>Condition Patterns</h3>
+      <dl class="detail-list">
+        <dt>Antecedent (first)</dt>
+        <dd><code class="regex">{{ . }}</code></dd>
+        {{- with $p.second -}}
+          <dt>Consequent (second)</dt>
+          <dd><code class="regex">{{ . }}</code></dd>
+        {{- end -}}
+      </dl>
+      <p class="detail-note">Flags occurrences of <em>first</em> that are not accompanied by <em>second</em>.</p>
+    </section>
+  {{- end -}}
+
+  {{- with $p.exceptions -}}
+    <section class="rule-section">
+      <h3>Exceptions</h3>
+      <ul class="token-list token-list--inline">
+        {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+      </ul>
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Capitalization ──────────────────────────────────────────────── */ -}}
+{{- if eq $extends "capitalization" -}}
+
+  {{- with $p.match -}}
+    <section class="rule-section">
+      <h3>Capitalization Style</h3>
+      <dl class="detail-list">
+        <dt>Match token</dt>
+        <dd><code>{{ . }}</code></dd>
+        {{- with $p.indicators -}}
+          <dt>Reset indicators</dt>
+          <dd>
+            {{- range . -}}<code class="indicator">{{ . }}</code> {{- end -}}
+          </dd>
+        {{- end -}}
+      </dl>
+    </section>
+  {{- end -}}
+
+  {{- with $p.exceptions -}}
+    <section class="rule-section">
+      <h3>Exceptions</h3>
+      {{- $count := len . -}}
+      {{- if gt $count 20 -}}
+        <details class="collapsible">
+          <summary>{{ $count }} exceptions <span class="collapsible-hint">(click to expand)</span></summary>
+          <ul class="token-list token-list--inline">
+            {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+          </ul>
+        </details>
+      {{- else -}}
+        <ul class="token-list token-list--inline">
+          {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+        </ul>
+      {{- end -}}
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Occurrence ───────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "occurrence" -}}
+
+  <section class="rule-section">
+    <h3>Occurrence Limits</h3>
+    <dl class="detail-list">
+      {{- with $p.max -}}<dt>Maximum</dt><dd>{{ . }}</dd>{{- end -}}
+      {{- with $p.min -}}<dt>Minimum</dt><dd>{{ . }}</dd>{{- end -}}
+      {{- with $p.token -}}<dt>Count pattern</dt><dd><code class="regex">{{ . }}</code></dd>{{- end -}}
+    </dl>
+  </section>
+
+{{- end -}}
+
+{{- /* ── Repetition ───────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "repetition" -}}
+
+  <section class="rule-section">
+    <h3>Repetition Settings</h3>
+    <dl class="detail-list">
+      {{- with $p.max -}}<dt>Maximum repeats</dt><dd>{{ . }}</dd>{{- end -}}
+      <dt>Alphabetic only</dt><dd>{{ if $p.alpha }}Yes{{ else }}No{{ end }}</dd>
+    </dl>
+  </section>
+
+{{- end -}}
+
+{{- /* ── Consistency ──────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "consistency" -}}
+
+  {{- with $p.either -}}
+    <section class="rule-section">
+      <h3>Consistent Alternatives</h3>
+      <p class="detail-note">Use one form consistently throughout the document — do not mix both.</p>
+      <table class="swap-table">
+        <thead><tr><th>Option A</th><th>Option B</th></tr></thead>
+        <tbody>
+          {{- range $a, $b := . -}}
+            <tr><td><code>{{ $a }}</code></td><td><code>{{ $b }}</code></td></tr>
+          {{- end -}}
+        </tbody>
+      </table>
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Metric ───────────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "metric" -}}
+
+  <section class="rule-section">
+    <h3>Metric Definition</h3>
+    <dl class="detail-list">
+      {{- with $p.formula -}}<dt>Formula</dt><dd><code>{{ . }}</code></dd>{{- end -}}
+      {{- with $p.condition -}}<dt>Condition</dt><dd><code>{{ . }}</code></dd>{{- end -}}
+    </dl>
+  </section>
+
+{{- end -}}
+
+{{- /* ── Sequence ─────────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "sequence" -}}
+
+  {{- with $p.pattern -}}
+    <section class="rule-section">
+      <h3>Sequence Pattern</h3>
+      <pre class="code-block"><code>{{ . }}</code></pre>
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Script ───────────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "script" -}}
+
+  {{- with $p.script -}}
+    <section class="rule-section">
+      <h3>Script</h3>
+      <pre class="code-block"><code>{{ . }}</code></pre>
+    </section>
+  {{- end -}}
+
+{{- end -}}
+
+{{- /* ── Spelling ─────────────────────────────────────────────────────── */ -}}
+{{- if eq $extends "spelling" -}}
+
+  <section class="rule-section">
+    <h3>Spelling Configuration</h3>
+    <dl class="detail-list">
+      <dt>Use project vocabulary</dt><dd>{{ if $p.vocab }}Yes{{ else }}No{{ end }}</dd>
+      <dt>Custom dictionary</dt><dd>{{ if $p.custom }}Yes{{ else }}No{{ end }}</dd>
+      {{- with $p.dictionaries -}}
+        <dt>Dictionaries</dt>
+        <dd>
+          <ul class="token-list token-list--inline">
+            {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+          </ul>
+        </dd>
+      {{- end -}}
+      {{- with $p.filters -}}
+        <dt>Filters</dt>
+        <dd>
+          <ul class="token-list token-list--inline">
+            {{- range . -}}<li><code>{{ . }}</code></li>{{- end -}}
+          </ul>
+        </dd>
+      {{- end -}}
+    </dl>
+  </section>
+
+{{- end -}}
+
+{{- /* ── Action (shared across types) ─────────────────────────────────── */ -}}
+{{- with $p.action_name -}}
+  <section class="rule-section">
+    <h3>Suggested Action</h3>
+    <dl class="detail-list">
+      <dt>Action</dt><dd><code>{{ . }}</code></dd>
+      {{- with $p.action_params -}}
+        <dt>Parameters</dt>
+        <dd>
+          {{- range . -}}<code class="indicator">{{ . }}</code> {{- end -}}
+        </dd>
+      {{- end -}}
+    </dl>
+  </section>
+{{- end -}}
+
+{{- /* ── Shared settings ────────────────────────────────────────────────── */ -}}
+<section class="rule-section">
+  <h3>Settings</h3>
+  <dl class="detail-list">
+    {{- with $p.scope -}}<dt>Scope</dt><dd><code>{{ . }}</code></dd>{{- end -}}
+    <dt>Case-insensitive</dt><dd>{{ if $p.ignorecase }}Yes{{ else }}No{{ end }}</dd>
+    {{- if $p.nonword -}}<dt>Non-word boundaries</dt><dd>Yes</dd>{{- end -}}
+  </dl>
+</section>

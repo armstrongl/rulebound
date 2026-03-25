@@ -1,0 +1,114 @@
+{{- define "main" -}}
+{{- $p := .Params -}}
+
+<div class="list-page">
+
+  <header class="list-header">
+    <h1>{{ .Title }}</h1>
+    {{- with .Content -}}<div class="list-intro">{{ . }}</div>{{- end -}}
+
+    {{- /* Summary stats for the rules listing page */ -}}
+    {{- with $p.total_rules -}}
+      <p class="list-count">{{ . }} rules</p>
+    {{- end -}}
+  </header>
+
+  {{- /* ── Filter bar ──────────────────────────────────────────────── */ -}}
+  {{- /*
+    Hugo static filtering: we render separate sections by severity and type
+    using taxonomy grouping. No JavaScript filtering needed for the basic view.
+  */ -}}
+
+  {{- /* ── Aggregate stats (for _index pages with counts) ──────────── */ -}}
+  {{- if or $p.by_type $p.by_severity $p.by_category -}}
+    <div class="stats-grid">
+
+      {{- with $p.by_severity -}}
+        <div class="stats-card">
+          <h3>By Severity</h3>
+          <ul class="stats-list">
+            {{- range $level, $count := . -}}
+              <li>
+                <a href="{{ (printf "/severities/%s/" ($level | urlize)) | relURL }}" class="stats-link">
+                  {{- partial "severity-badge.html" $level -}}
+                  <span class="stats-count">{{ $count }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </div>
+      {{- end -}}
+
+      {{- with $p.by_type -}}
+        <div class="stats-card">
+          <h3>By Type</h3>
+          <ul class="stats-list">
+            {{- range $type, $count := . -}}
+              <li>
+                <a href="{{ (printf "/ruletypes/%s/" ($type | urlize)) | relURL }}" class="stats-link">
+                  <span class="type-badge">{{ $type }}</span>
+                  <span class="stats-count">{{ $count }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </div>
+      {{- end -}}
+
+      {{- with $p.by_category -}}
+        <div class="stats-card">
+          <h3>By Category</h3>
+          <ul class="stats-list">
+            {{- range $cat, $count := . -}}
+              <li>
+                <a href="{{ (printf "/categories/%s/" ($cat | urlize)) | relURL }}" class="stats-link">
+                  <span class="category-tag">{{ $cat }}</span>
+                  <span class="stats-count">{{ $count }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </div>
+      {{- end -}}
+
+    </div>
+  {{- end -}}
+
+  {{- /* ── Rule table ──────────────────────────────────────────────── */ -}}
+  {{- $pages := .Pages -}}
+  {{- if $pages -}}
+    <section class="rule-table-section">
+      <table class="rule-table">
+        <thead>
+          <tr>
+            <th scope="col">Rule</th>
+            <th scope="col">Type</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{- range $pages.ByTitle -}}
+            {{- $rp := .Params -}}
+            <tr>
+              <td><a href="{{ .RelPermalink }}" class="rule-link">{{ .Title }}</a></td>
+              <td>
+                <a href="{{ (printf "/ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
+              </td>
+              <td>{{ partial "severity-badge.html" ($rp.level | default "suggestion") }}</td>
+              <td class="rule-description">
+                {{- with $rp.message -}}
+                  {{- $display := . | replaceRE `'?%s'?` "[matched text]" -}}
+                  {{- $display | truncate 120 -}}
+                {{- end -}}
+              </td>
+            </tr>
+          {{- end -}}
+        </tbody>
+      </table>
+    </section>
+  {{- end -}}
+
+</div>
+
+{{- end -}}

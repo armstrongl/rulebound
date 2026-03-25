@@ -1,0 +1,78 @@
+{{- define "main" -}}
+{{- $p := .Params -}}
+
+<article class="rule-page">
+
+  {{- /* Page header */ -}}
+  <header class="rule-header">
+    <div class="rule-title-row">
+      <h1 class="rule-title">{{ .Title }}</h1>
+      {{- partial "severity-badge.html" ($p.level | default "suggestion") -}}
+    </div>
+
+    <div class="rule-meta">
+      <span class="rule-meta-item">
+        <span class="meta-label">Type</span>
+        <a href="{{ (printf "/ruletypes/%s/" ($p.extends | urlize)) | relURL }}" class="meta-value type-badge">{{ $p.extends }}</a>
+      </span>
+
+      {{- with $p.categories -}}
+        <span class="rule-meta-item">
+          <span class="meta-label">{{ if gt (len .) 1 }}Categories{{ else }}Category{{ end }}</span>
+          {{- range . -}}
+            <a href="{{ (printf "/categories/%s/" (. | urlize)) | relURL }}" class="meta-value category-tag">{{ . }}</a>
+          {{- end -}}
+        </span>
+      {{- end -}}
+
+      {{- with $p.scope -}}
+        <span class="rule-meta-item">
+          <span class="meta-label">Scope</span>
+          <span class="meta-value">{{ . }}</span>
+        </span>
+      {{- end -}}
+
+      {{- with $p.link -}}
+        <span class="rule-meta-item">
+          <a href="{{ . }}" class="meta-link external-link" target="_blank" rel="noopener noreferrer">Style guide reference</a>
+        </span>
+      {{- end -}}
+    </div>
+
+    {{- /* Human-readable message with %s replaced */ -}}
+    {{- with $p.message -}}
+      {{- $display := . | replaceRE `'?%s'?` "<em class=\"matched-text\">[matched text]</em>" -}}
+      <p class="rule-message">{{ $display | safeHTML }}</p>
+    {{- end -}}
+  </header>
+
+  {{- /* Companion prose or auto-generated description */ -}}
+  {{- with .Content -}}
+    <section class="rule-body">
+      {{ . }}
+    </section>
+  {{- end -}}
+
+  {{- /* Type-specific details */ -}}
+  <div class="rule-details-section">
+    {{- partial "rule-details.html" . -}}
+  </div>
+
+  {{- /* Technical details: original message template */ -}}
+  {{- with $p.message -}}
+    {{- if strings.Contains . "%" -}}
+      <details class="technical-details">
+        <summary>Technical Details</summary>
+        <dl class="detail-list">
+          <dt>Message template</dt>
+          <dd><code>{{ . }}</code></dd>
+          {{- with $p.extends -}}<dt>Extends</dt><dd><code>{{ . }}</code></dd>{{- end -}}
+          {{- with $p.level -}}<dt>Severity</dt><dd><code>{{ . }}</code></dd>{{- end -}}
+        </dl>
+      </details>
+    {{- end -}}
+  {{- end -}}
+
+</article>
+
+{{- end -}}

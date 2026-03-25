@@ -1,0 +1,21 @@
+{{- /*
+  search.html
+  Pagefind search UI placeholder. Actual Pagefind integration is wired in Phase 5
+  after the Hugo build runs `pagefind --site public/`. The divs and script tags
+  here are the standard Pagefind entry points; they are no-ops until the index
+  exists.
+*/ -}}
+<div class="search-widget">
+  <div id="search"></div>
+</div>
+
+{{- /* Pagefind UI assets — served from /pagefind/ after Phase 5 indexing */ -}}
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css">
+<script src="/pagefind/pagefind-ui.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    if (typeof PagefindUI !== 'undefined') {
+      new PagefindUI({ element: '#search', showSubResults: true });
+    }
+  });
+</script>

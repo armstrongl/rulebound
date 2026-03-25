@@ -1,0 +1,8 @@
+{{- /*
+  severity-badge.html
+  Renders a colored pill badge for a severity level.
+  Usage: {{ partial "severity-badge.html" .Params.level }}
+  Expects a string: "error", "warning", or "suggestion"
+*/ -}}
+{{- $level := . -}}
+<span class="severity-badge severity-{{ $level }}">{{ $level }}</span>

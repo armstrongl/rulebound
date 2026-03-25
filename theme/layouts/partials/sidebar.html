@@ -1,0 +1,73 @@
+{{- /*
+  sidebar.html
+  Navigation sidebar.
+  - Primary grouping: custom categories from taxonomy (site.Taxonomies.categories)
+  - Fallback grouping: extends type (site.Taxonomies.ruletypes)
+  - Each rule link shows a small severity indicator dot
+  - On mobile the sidebar is toggled via the hamburger button in baseof.html
+*/ -}}
+
+<nav class="sidebar" id="sidebar" aria-label="Rule navigation">
+
+  {{- /* Site title / home link */ -}}
+  <div class="sidebar-header">
+    <a href="{{ "/" | relURL }}" class="sidebar-brand">{{ site.Title }}</a>
+  </div>
+
+  {{- /* Search widget */ -}}
+  <div class="sidebar-search">
+    {{- partial "search.html" . -}}
+  </div>
+
+  {{- /* ── Navigation grouped by category ───────────────────────────── */ -}}
+
+  {{- $hasCats := false -}}
+  {{- with site.Taxonomies.categories -}}
+    {{- if gt (len .) 0 -}}
+      {{- $hasCats = true -}}
+      {{- range $catName, $catPages := . -}}
+        <div class="sidebar-group">
+          <h3 class="sidebar-group-title">{{ $catName | humanize | title }}</h3>
+          <ul class="sidebar-list">
+            {{- range $catPages.Pages -}}
+              {{- $active := eq $.RelPermalink .RelPermalink -}}
+              <li class="sidebar-item{{ if $active }} active{{ end }}">
+                <a href="{{ .RelPermalink }}" class="sidebar-link">
+                  {{- with .Params.level -}}
+                    <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
+                  {{- end -}}
+                  <span class="sidebar-link-text">{{ .Title }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </div>
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* Fallback: group by rule type if no categories are defined */ -}}
+  {{- if not $hasCats -}}
+    {{- with site.Taxonomies.ruletypes -}}
+      {{- range $typeName, $typePages := . -}}
+        <div class="sidebar-group">
+          <h3 class="sidebar-group-title">{{ $typeName | humanize | title }}</h3>
+          <ul class="sidebar-list">
+            {{- range $typePages.Pages -}}
+              {{- $active := eq $.RelPermalink .RelPermalink -}}
+              <li class="sidebar-item{{ if $active }} active{{ end }}">
+                <a href="{{ .RelPermalink }}" class="sidebar-link">
+                  {{- with .Params.level -}}
+                    <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
+                  {{- end -}}
+                  <span class="sidebar-link-text">{{ .Title }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </div>
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+</nav>

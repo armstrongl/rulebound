@@ -1,0 +1,5 @@
+name = "rulebound"
+license = "MIT"
+licenselink = "https://opensource.org/licenses/MIT"
+description = "Rulebound documentation theme for Vale rule packages"
+min_version = "0.120.0"
