@@ -14,9 +14,12 @@ import (
 
 // homepageIndexData is the frontmatter for content/_index.md.
 type homepageIndexData struct {
-	Title       string `yaml:"title"`
-	Description string `yaml:"description,omitempty"`
-	TotalRules  int    `yaml:"total_rules"`
+	Title       string         `yaml:"title"`
+	Description string         `yaml:"description,omitempty"`
+	TotalRules  int            `yaml:"total_rules"`
+	ByType      map[string]int `yaml:"by_type"`
+	BySeverity  map[string]int `yaml:"by_severity"`
+	ByCategory  map[string]int `yaml:"by_category"`
 }
 
 // rulesIndexData is the frontmatter for content/rules/_index.md.
@@ -38,10 +41,15 @@ type siteStats struct {
 
 // generateHomepageIndex writes content/_index.md.
 func generateHomepageIndex(cfg *config.Config, rules []*parser.ValeRule, outputDir string) error {
+	byType, bySeverity, byCategory := aggregateCounts(rules)
+
 	data := homepageIndexData{
 		Title:       cfg.Title,
 		Description: cfg.Description,
 		TotalRules:  len(rules),
+		ByType:      byType,
+		BySeverity:  bySeverity,
+		ByCategory:  byCategory,
 	}
 
 	out, err := yaml.Marshal(data)

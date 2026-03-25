@@ -157,3 +157,46 @@ categories:
 		t.Error("Rules.Shared not found in beta category")
 	}
 }
+
+// ── LoadFile tests ──────────────────────────────────────────────────────────
+
+func TestLoadFileValidConfig(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: File Test
+baseURL: https://example.com/
+`
+	cfgPath := filepath.Join(dir, "rulebound.yml")
+	if err := os.WriteFile(cfgPath, []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+	cfg, err := config.LoadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadFile() returned unexpected error: %v", err)
+	}
+	if cfg.Title != "File Test" {
+		t.Errorf("Title = %q, want %q", cfg.Title, "File Test")
+	}
+}
+
+func TestLoadFileNonExistentReturnsDefaults(t *testing.T) {
+	cfg, err := config.LoadFile("/does/not/exist/rulebound.yml")
+	if err != nil {
+		t.Fatalf("LoadFile() returned error for nonexistent file: %v", err)
+	}
+	// LoadFile falls through to loadFromPath which returns defaults when file not found
+	if cfg.BaseURL != "/" {
+		t.Errorf("BaseURL = %q, want %q", cfg.BaseURL, "/")
+	}
+}
+
+func TestLoadFileMalformedReturnsError(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "bad.yml")
+	if err := os.WriteFile(cfgPath, []byte("title: [unclosed"), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+	_, err := config.LoadFile(cfgPath)
+	if err == nil {
+		t.Fatal("LoadFile() expected error for malformed YAML")
+	}
+}
