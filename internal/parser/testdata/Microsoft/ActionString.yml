@@ -1,0 +1,6 @@
+extends: existence
+message: "Test string-form action for '%s'."
+level: warning
+action: suggest
+tokens:
+  - example

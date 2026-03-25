@@ -4,17 +4,17 @@ package parser
 
 // Known extends constants for Vale rule types.
 const (
-	ExtendsExistence    = "existence"
-	ExtendsSubstitution = "substitution"
-	ExtendsOccurrence   = "occurrence"
-	ExtendsRepetition   = "repetition"
-	ExtendsConsistency  = "consistency"
-	ExtendsConditional  = "conditional"
+	ExtendsExistence      = "existence"
+	ExtendsSubstitution   = "substitution"
+	ExtendsOccurrence     = "occurrence"
+	ExtendsRepetition     = "repetition"
+	ExtendsConsistency    = "consistency"
+	ExtendsConditional    = "conditional"
 	ExtendsCapitalization = "capitalization"
-	ExtendsMetric       = "metric"
-	ExtendsScript       = "script"
-	ExtendsSpelling     = "spelling"
-	ExtendsSequence     = "sequence"
+	ExtendsMetric         = "metric"
+	ExtendsScript         = "script"
+	ExtendsSpelling       = "spelling"
+	ExtendsSequence       = "sequence"
 )
 
 // ValeRule is the unified in-memory representation of a parsed Vale rule file.

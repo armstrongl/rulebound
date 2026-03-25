@@ -63,17 +63,9 @@ func TestParseRule_Existence_Avoid_CompanionMD(t *testing.T) {
 	if rule.CompanionMD == "" {
 		t.Fatal("CompanionMD: expected non-empty string")
 	}
-	// Frontmatter should be stripped; body content should remain
-	if len(rule.CompanionMD) == 0 {
-		t.Error("CompanionMD body should not be empty after frontmatter strip")
-	}
-	// Should not start with "---"
+	// Should not start with "---" (frontmatter should be stripped)
 	if len(rule.CompanionMD) >= 3 && rule.CompanionMD[:3] == "---" {
 		t.Error("CompanionMD should not contain frontmatter")
-	}
-	// Should contain body text
-	if rule.CompanionMD == "" {
-		t.Error("CompanionMD should contain body text")
 	}
 }
 
@@ -139,6 +131,22 @@ func TestParseRule_Existence_GeneralURL_ActionWithParams(t *testing.T) {
 	}
 	if rule.Action.Params[0] != "URL" || rule.Action.Params[1] != "address" {
 		t.Errorf("Action.Params: got %v", rule.Action.Params)
+	}
+}
+
+func TestParseRule_Existence_ActionStringForm(t *testing.T) {
+	rule, err := parser.ParseRule(testdata("ActionString.yml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rule.Action == nil {
+		t.Fatal("Action: expected non-nil for string-form action")
+	}
+	if rule.Action.Name != "suggest" {
+		t.Errorf("Action.Name: got %q, want %q", rule.Action.Name, "suggest")
+	}
+	if rule.Action.Params != nil {
+		t.Errorf("Action.Params: expected nil for string-form, got %v", rule.Action.Params)
 	}
 }
 
@@ -330,9 +338,13 @@ func TestParseRule_NonExistentFile(t *testing.T) {
 // ── ParsePackage ─────────────────────────────────────────────────────────────
 
 func TestParsePackage_Microsoft(t *testing.T) {
-	rules, err := parser.ParsePackage(testdata())
+	rules, warnings, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	// Expect warnings for malformed.yml, empty.yml, NoExtends.yml
+	if len(warnings) == 0 {
+		t.Error("ParsePackage: expected warnings for unparseable files")
 	}
 
 	if len(rules) == 0 {
@@ -374,7 +386,7 @@ func TestParsePackage_Microsoft(t *testing.T) {
 }
 
 func TestParsePackage_SortedByName(t *testing.T) {
-	rules, err := parser.ParsePackage(testdata())
+	rules, _, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -388,7 +400,7 @@ func TestParsePackage_SortedByName(t *testing.T) {
 }
 
 func TestParsePackage_PackageName(t *testing.T) {
-	rules, err := parser.ParsePackage(testdata())
+	rules, _, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -403,7 +415,7 @@ func TestParsePackage_PackageName(t *testing.T) {
 }
 
 func TestParsePackage_EmptyDir(t *testing.T) {
-	rules, err := parser.ParsePackage(t.TempDir())
+	rules, _, err := parser.ParsePackage(t.TempDir())
 	if err != nil {
 		t.Fatalf("unexpected error for empty dir: %v", err)
 	}
@@ -413,7 +425,7 @@ func TestParsePackage_EmptyDir(t *testing.T) {
 }
 
 func TestParsePackage_NonExistentDir(t *testing.T) {
-	_, err := parser.ParsePackage("/does/not/exist/xyz")
+	_, _, err := parser.ParsePackage("/does/not/exist/xyz")
 	if err == nil {
 		t.Error("expected error for non-existent directory, got nil")
 	}
