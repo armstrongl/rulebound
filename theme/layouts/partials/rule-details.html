@@ -187,9 +187,14 @@
 {{- if eq $extends "consistency" -}}
 
   {{- with $p.either -}}
+    {{- $count := len . -}}
     <section class="rule-section">
       <h3>Consistent Alternatives</h3>
       <p class="detail-note">Use one form consistently throughout the document — do not mix both.</p>
+      {{- if gt $count 20 -}}
+      <details>
+        <summary>Show all {{ $count }} alternatives</summary>
+      {{- end -}}
       <table class="swap-table">
         <thead><tr><th>Option A</th><th>Option B</th></tr></thead>
         <tbody>
@@ -198,6 +203,9 @@
           {{- end -}}
         </tbody>
       </table>
+      {{- if gt $count 20 -}}
+      </details>
+      {{- end -}}
     </section>
   {{- end -}}
 
