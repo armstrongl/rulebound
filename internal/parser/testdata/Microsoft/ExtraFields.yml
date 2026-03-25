@@ -1,0 +1,7 @@
+extends: existence
+message: "Test extra fields passthrough."
+level: warning
+tokens:
+  - example
+custom_field: some_value
+another_extra: 42

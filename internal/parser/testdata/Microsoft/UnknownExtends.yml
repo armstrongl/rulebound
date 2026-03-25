@@ -1,0 +1,5 @@
+extends: futuristic
+message: "Test unknown extends type."
+level: warning
+tokens:
+  - foo

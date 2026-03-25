@@ -1,0 +1,4 @@
+message: "No extends field."
+level: warning
+tokens:
+  - bar
