@@ -39,10 +39,16 @@ Usage example:
 }
 
 // Execute runs the root command and exits on failure.
+// Exit codes are determined by the error type: *exitError carries a specific
+// code, while other errors default to ExitGeneral.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(ExitGeneral)
+		code := ExitGeneral
+		if ee, ok := err.(*exitError); ok {
+			code = ee.code
+		}
+		os.Exit(code)
 	}
 }
 

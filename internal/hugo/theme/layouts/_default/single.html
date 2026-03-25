@@ -1,26 +1,27 @@
 {{- define "main" -}}
 {{- $p := .Params -}}
 
-<article class="rule-page">
+<article class="rule-page" data-pagefind-body>
 
   {{- /* Page header */ -}}
   <header class="rule-header">
     <div class="rule-title-row">
-      <h1 class="rule-title">{{ .Title }}</h1>
+      <h1 class="rule-title" data-pagefind-meta="title">{{ .Title }}</h1>
       {{- partial "severity-badge.html" ($p.level | default "suggestion") -}}
+      <span data-pagefind-filter="severity" hidden>{{ $p.level | default "suggestion" }}</span>
     </div>
 
     <div class="rule-meta">
       <span class="rule-meta-item">
         <span class="meta-label">Type</span>
-        <a href="{{ (printf "/ruletypes/%s/" ($p.extends | urlize)) | relURL }}" class="meta-value type-badge">{{ $p.extends }}</a>
+        <a href="{{ (printf "/ruletypes/%s/" ($p.extends | urlize)) | relURL }}" class="meta-value type-badge" data-pagefind-filter="type">{{ $p.extends }}</a>
       </span>
 
       {{- with $p.categories -}}
         <span class="rule-meta-item">
           <span class="meta-label">{{ if gt (len .) 1 }}Categories{{ else }}Category{{ end }}</span>
           {{- range . -}}
-            <a href="{{ (printf "/categories/%s/" (. | urlize)) | relURL }}" class="meta-value category-tag">{{ . }}</a>
+            <a href="{{ (printf "/categories/%s/" (. | urlize)) | relURL }}" class="meta-value category-tag" data-pagefind-filter="category">{{ . }}</a>
           {{- end -}}
         </span>
       {{- end -}}
