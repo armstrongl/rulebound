@@ -1,0 +1,11 @@
+# Compiled binary
+/rulebound
+
+# Generated site output
+/public/
+
+# Go test cache artifacts
+*.test
+
+# macOS
+.DS_Store
