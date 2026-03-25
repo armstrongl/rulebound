@@ -15,6 +15,15 @@ var Version = "dev"
 // Verbose holds the global --verbose flag value, shared across sub-commands.
 var Verbose bool
 
+// Exit codes per plan spec.
+const (
+	ExitSuccess     = 0
+	ExitGeneral     = 1
+	ExitConfigError = 2
+	ExitHugoError   = 3
+	ExitHugoBuild   = 4
+)
+
 // rootCmd is the base command when rulebound is called with no sub-commands.
 var rootCmd = &cobra.Command{
 	Use:   "rulebound",
@@ -24,14 +33,16 @@ documenting every rule, organised into categories, and powered by a Hugo theme.
 
 Usage example:
   rulebound build ./my-vale-package --output ./public/`,
-	Version: Version,
+	Version:       Version,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 // Execute runs the root command and exits on failure.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(ExitGeneral)
 	}
 }
 

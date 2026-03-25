@@ -52,14 +52,14 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("package path must be a directory, got: %s", packagePath)
 	}
 
-	// Determine config directory: either the explicit --config flag's parent, or the package root.
-	configDir := packagePath
+	// Load config: if --config flag is set, use the explicit file path;
+	// otherwise, auto-detect rulebound.yml in the package root.
+	var cfg *config.Config
 	if buildConfig != "" {
-		configDir = buildConfig
+		cfg, err = config.LoadFile(buildConfig)
+	} else {
+		cfg, err = config.Load(packagePath)
 	}
-
-	// Load (or default) the rulebound.yml configuration.
-	cfg, err := config.Load(configDir)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}

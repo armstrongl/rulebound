@@ -38,7 +38,17 @@ type Config struct {
 // If the file exists but is malformed YAML, Load returns an error.
 func Load(packageDir string) (*Config, error) {
 	cfgPath := filepath.Join(packageDir, "rulebound.yml")
+	return loadFromPath(cfgPath, packageDir)
+}
 
+// LoadFile reads and parses a rulebound.yml from an explicit file path.
+// If the file does not exist, it returns an error (unlike Load, which defaults).
+func LoadFile(cfgPath string) (*Config, error) {
+	packageDir := filepath.Dir(cfgPath)
+	return loadFromPath(cfgPath, packageDir)
+}
+
+func loadFromPath(cfgPath, packageDir string) (*Config, error) {
 	data, err := os.ReadFile(cfgPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -52,7 +62,6 @@ func Load(packageDir string) (*Config, error) {
 		return nil, fmt.Errorf("parsing rulebound.yml: %w", err)
 	}
 
-	// Fill in any omitted fields with defaults.
 	if cfg.Title == "" {
 		cfg.Title = filepath.Base(packageDir)
 	}

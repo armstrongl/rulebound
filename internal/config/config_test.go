@@ -53,8 +53,6 @@ categories:
 // TestLoadMissingConfigUsesDefaults verifies that when rulebound.yml is absent,
 // sensible defaults are applied (title from dir name, baseURL "/", no categories).
 func TestLoadMissingConfigUsesDefaults(t *testing.T) {
-	// Use a temp dir whose base name we control via a symlink trick — or just
-	// rely on the dir name provided by t.TempDir() since we check the basename.
 	dir := t.TempDir()
 
 	cfg, err := config.Load(dir)
