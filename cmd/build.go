@@ -79,24 +79,24 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Parse rules ───────────────────────────────────────────────────────
-	rules, warnings, err := parser.ParsePackage(packagePath)
+	result, err := parser.ParsePackage(packagePath)
 	if err != nil {
 		return fmt.Errorf("parsing package: %w", err)
 	}
 
-	for _, w := range warnings {
+	for _, w := range result.Warnings {
 		fmt.Fprintf(os.Stderr, "Warning: %s: %s\n", w.File, w.Message)
 	}
 
-	if len(rules) == 0 {
+	if len(result.Rules) == 0 {
 		return fmt.Errorf("no valid rules found in %s", packagePath)
 	}
 
 	// In strict mode, any parse warnings are treated as errors.
-	if buildStrict && len(warnings) > 0 {
+	if buildStrict && len(result.Warnings) > 0 {
 		return &exitError{
 			code: ExitGeneral,
-			err:  fmt.Errorf("strict mode: %d parse warning(s) found", len(warnings)),
+			err:  fmt.Errorf("strict mode: %d parse warning(s) found", len(result.Warnings)),
 		}
 	}
 
@@ -116,7 +116,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Scaffold Hugo project ─────────────────────────────────────────────
-	scaffold, err := hugobuilder.Scaffold(rules, cfg)
+	scaffold, err := hugobuilder.Scaffold(result, cfg)
 	if err != nil {
 		if scaffold != nil && scaffold.TempDir != "" {
 			os.RemoveAll(scaffold.TempDir)
@@ -157,21 +157,21 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Hugo build ────────────────────────────────────────────────────────
-	result, err := hugobuilder.Build(hugoBin, scaffold.TempDir, outputDir)
+	buildResult, err := hugobuilder.Build(hugoBin, scaffold.TempDir, outputDir)
 	if err != nil {
-		if Verbose && result != nil {
-			if result.Stdout != "" {
-				fmt.Printf("Hugo stdout:\n%s\n", result.Stdout)
+		if Verbose && buildResult != nil {
+			if buildResult.Stdout != "" {
+				fmt.Printf("Hugo stdout:\n%s\n", buildResult.Stdout)
 			}
-			if result.Stderr != "" {
-				fmt.Fprintf(os.Stderr, "Hugo stderr:\n%s\n", result.Stderr)
+			if buildResult.Stderr != "" {
+				fmt.Fprintf(os.Stderr, "Hugo stderr:\n%s\n", buildResult.Stderr)
 			}
 		}
 		return mapBuildError(err)
 	}
 
-	if Verbose && result.Stderr != "" {
-		fmt.Fprintf(os.Stderr, "Hugo output:\n%s", result.Stderr)
+	if Verbose && buildResult.Stderr != "" {
+		fmt.Fprintf(os.Stderr, "Hugo output:\n%s", buildResult.Stderr)
 	}
 
 	// ── Pagefind ──────────────────────────────────────────────────────────
@@ -187,9 +187,9 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Summary ───────────────────────────────────────────────────────────
-	total := len(rules) + len(warnings)
-	skipped := len(warnings)
-	fmt.Printf("Build complete: %d/%d rules processed, %d skipped", len(rules), total, skipped)
+	total := len(result.Rules) + len(result.Warnings)
+	skipped := len(result.Warnings)
+	fmt.Printf("Build complete: %d/%d rules processed, %d skipped", len(result.Rules), total, skipped)
 	if skipped > 0 {
 		fmt.Print(" (see warnings above)")
 	}

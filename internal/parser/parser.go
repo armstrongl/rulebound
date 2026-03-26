@@ -327,15 +327,15 @@ type ParseWarning struct {
 }
 
 // ParsePackage scans dir for .yml and .yaml files, parses each as a Vale rule,
-// and returns the successfully parsed rules sorted by name. Files that fail to
-// parse (malformed YAML, missing extends, etc.) are skipped and reported as
-// warnings. Non-YAML files (e.g., meta.json) are ignored.
+// and returns a *ParseResult with rules sorted by name, any parsed guidelines,
+// and warnings. Files that fail to parse (malformed YAML, missing extends, etc.)
+// are skipped and reported as warnings. Non-YAML files (e.g., meta.json) are ignored.
 //
 // Returns an error only if dir cannot be read.
-func ParsePackage(dir string) ([]*ValeRule, []ParseWarning, error) {
+func ParsePackage(dir string) (*ParseResult, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading directory %s: %w", dir, err)
+		return nil, fmt.Errorf("reading directory %s: %w", dir, err)
 	}
 
 	packageName := filepath.Base(dir)
@@ -370,7 +370,18 @@ func ParsePackage(dir string) ([]*ValeRule, []ParseWarning, error) {
 		return rules[i].Name < rules[j].Name
 	})
 
-	return rules, warnings, nil
+	// Parse guidelines from guidelines/ subdirectory.
+	guidelines, guidelineWarnings, err := parseGuidelines(dir)
+	if err != nil {
+		return nil, fmt.Errorf("parsing guidelines: %w", err)
+	}
+	warnings = append(warnings, guidelineWarnings...)
+
+	return &ParseResult{
+		Rules:      rules,
+		Guidelines: guidelines,
+		Warnings:   warnings,
+	}, nil
 }
 
 // nameFromPath derives the rule name from a file path by stripping the

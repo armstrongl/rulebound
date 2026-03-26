@@ -338,30 +338,22 @@ func TestParseRule_NonExistentFile(t *testing.T) {
 // ── ParsePackage ─────────────────────────────────────────────────────────────
 
 func TestParsePackage_Microsoft(t *testing.T) {
-	rules, warnings, err := parser.ParsePackage(testdata())
+	result, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// Expect warnings for malformed.yml, empty.yml, NoExtends.yml
-	if len(warnings) == 0 {
+	if len(result.Warnings) == 0 {
 		t.Error("ParsePackage: expected warnings for unparseable files")
 	}
 
-	if len(rules) == 0 {
+	if len(result.Rules) == 0 {
 		t.Fatal("ParsePackage: expected rules, got empty slice")
 	}
 
-	// meta.json and malformed/empty must be excluded from successful results
-	// The valid rule files in testdata are:
-	// Avoid, Terms, Acronyms, Headings, SentenceLength, GeneralURL, Plurals, We,
-	// UnknownExtends, NoExtends (errors skipped), ExtraFields
-	// malformed.yml and empty.yml should be skipped (errors)
-	// NoExtends.yml should be skipped (error: missing extends)
-	// meta.json should be skipped (not a .yml/.yaml file)
-
 	// Find rule by name
 	find := func(name string) *parser.ValeRule {
-		for _, r := range rules {
+		for _, r := range result.Rules {
 			if r.Name == name {
 				return r
 			}
@@ -386,28 +378,28 @@ func TestParsePackage_Microsoft(t *testing.T) {
 }
 
 func TestParsePackage_SortedByName(t *testing.T) {
-	rules, _, err := parser.ParsePackage(testdata())
+	result, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	for i := 1; i < len(rules); i++ {
-		if rules[i].Name < rules[i-1].Name {
+	for i := 1; i < len(result.Rules); i++ {
+		if result.Rules[i].Name < result.Rules[i-1].Name {
 			t.Errorf("ParsePackage: rules not sorted at index %d: %q < %q",
-				i, rules[i].Name, rules[i-1].Name)
+				i, result.Rules[i].Name, result.Rules[i-1].Name)
 		}
 	}
 }
 
 func TestParsePackage_PackageName(t *testing.T) {
-	rules, _, err := parser.ParsePackage(testdata())
+	result, err := parser.ParsePackage(testdata())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(rules) == 0 {
+	if len(result.Rules) == 0 {
 		t.Fatal("no rules returned")
 	}
-	for _, r := range rules {
+	for _, r := range result.Rules {
 		if r.Category != "Microsoft" {
 			t.Errorf("rule %q Category (package name): got %q, want %q", r.Name, r.Category, "Microsoft")
 		}
@@ -415,19 +407,31 @@ func TestParsePackage_PackageName(t *testing.T) {
 }
 
 func TestParsePackage_EmptyDir(t *testing.T) {
-	rules, _, err := parser.ParsePackage(t.TempDir())
+	result, err := parser.ParsePackage(t.TempDir())
 	if err != nil {
 		t.Fatalf("unexpected error for empty dir: %v", err)
 	}
-	if len(rules) != 0 {
-		t.Errorf("ParsePackage on empty dir: expected 0 rules, got %d", len(rules))
+	if len(result.Rules) != 0 {
+		t.Errorf("ParsePackage on empty dir: expected 0 rules, got %d", len(result.Rules))
 	}
 }
 
 func TestParsePackage_NonExistentDir(t *testing.T) {
-	_, _, err := parser.ParsePackage("/does/not/exist/xyz")
+	_, err := parser.ParsePackage("/does/not/exist/xyz")
 	if err == nil {
 		t.Error("expected error for non-existent directory, got nil")
+	}
+}
+
+func TestParsePackage_IncludesGuidelines(t *testing.T) {
+	result, err := parser.ParsePackage(testdata())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// testdata/Microsoft/guidelines/ has 3 valid guidelines
+	if len(result.Guidelines) != 3 {
+		t.Errorf("expected 3 guidelines, got %d", len(result.Guidelines))
 	}
 }
 

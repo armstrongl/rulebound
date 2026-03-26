@@ -49,7 +49,9 @@ func GenerateRule(rule *parser.ValeRule, outDir string) error {
 //	│       └── <rule>.md  (one per rule)
 //	└── data/
 //	    └── site.json
-func GenerateSite(rules []*parser.ValeRule, cfg *config.Config, outputDir string) error {
+func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir string) error {
+	rules := result.Rules
+
 	// Assign categories from config before generating content.
 	AssignCategories(rules, cfg)
 

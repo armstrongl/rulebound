@@ -358,7 +358,7 @@ func TestGenerateSite_CreatesExpectedStructure(t *testing.T) {
 		BaseURL:     "https://example.com/",
 	}
 
-	if err := generator.GenerateSite(rules, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{Rules: rules}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 
@@ -391,7 +391,7 @@ func TestGenerateSite_HugoTOML(t *testing.T) {
 		Description: "A style guide.",
 		BaseURL:     "https://example.com/",
 	}
-	if err := generator.GenerateSite(nil, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 	toml := readFile(t, filepath.Join(outDir, "hugo.toml"))
@@ -427,7 +427,7 @@ func TestGenerateIndex_CountsByType(t *testing.T) {
 		makeRule("Headings", "existence", "warning"),
 	}
 	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
-	if err := generator.GenerateSite(rules, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{Rules: rules}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 
@@ -450,7 +450,7 @@ func TestGenerateIndex_SiteJSON(t *testing.T) {
 	rules[2].Category = "Formatting"
 
 	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
-	if err := generator.GenerateSite(rules, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{Rules: rules}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 
@@ -475,7 +475,7 @@ func TestGenerateIndex_HomepageIndex(t *testing.T) {
 		Description: "A style guide.",
 		BaseURL:     "/",
 	}
-	if err := generator.GenerateSite(nil, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 	index := readFile(t, filepath.Join(outDir, "content", "_index.md"))
@@ -492,7 +492,7 @@ func TestCategoryAssignment_FallsBackToExtends(t *testing.T) {
 	rule.Category = "" // no category set
 
 	cfg := &config.Config{Title: "Test", BaseURL: "/"}
-	if err := generator.GenerateSite([]*parser.ValeRule{rule}, cfg, outDir); err != nil {
+	if err := generator.GenerateSite(&parser.ParseResult{Rules: []*parser.ValeRule{rule}}, cfg, outDir); err != nil {
 		t.Fatalf("GenerateSite: %v", err)
 	}
 	content := readFile(t, filepath.Join(outDir, "content", "rules", "avoid.md"))
