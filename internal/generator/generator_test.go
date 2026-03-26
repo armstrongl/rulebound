@@ -2,7 +2,6 @@ package generator_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,15 +67,19 @@ func TestAutoDescription_Base(t *testing.T) {
 	if !strings.Contains(desc, "Avoid") {
 		t.Errorf("description missing rule name: %q", desc)
 	}
-	if !strings.Contains(desc, "error") {
-		t.Errorf("description missing level: %q", desc)
+	// Should use behavioral verb, not "is a ... rule"
+	if strings.Contains(desc, "is a") {
+		t.Errorf("description should not use 'is a' phrasing: %q", desc)
 	}
-	if !strings.Contains(desc, "existence") {
-		t.Errorf("description missing extends: %q", desc)
+	if !strings.Contains(desc, "flags") {
+		t.Errorf("description missing verb 'flags' for existence type: %q", desc)
 	}
-	// %s should be stripped
+	// %s-containing sentences should be dropped
 	if strings.Contains(desc, "%s") {
 		t.Errorf("description should not contain %%s: %q", desc)
+	}
+	if strings.Contains(desc, "Don't use") {
+		t.Errorf("description should not contain salvaged %%s sentence: %q", desc)
 	}
 }
 
@@ -84,11 +87,12 @@ func TestAutoDescription_WithLink(t *testing.T) {
 	rule := makeRule("Terms", "substitution", "warning")
 	rule.Link = "https://docs.microsoft.com/en-us/style-guide"
 	desc := generator.AutoDescription(rule)
-	if !strings.Contains(desc, "docs.microsoft.com") {
-		t.Errorf("description missing link domain: %q", desc)
+	// Link sentence should be absent (rendered by Hugo theme).
+	if strings.Contains(desc, "docs.microsoft.com") {
+		t.Errorf("description should not contain link domain: %q", desc)
 	}
-	if !strings.Contains(desc, rule.Link) {
-		t.Errorf("description missing full link: %q", desc)
+	if strings.Contains(desc, "See the") {
+		t.Errorf("description should not contain link sentence: %q", desc)
 	}
 }
 
@@ -96,34 +100,180 @@ func TestAutoDescription_WithTokens(t *testing.T) {
 	rule := makeRule("Avoid", "existence", "error")
 	rule.Tokens = []string{"foo", "bar", "baz"}
 	desc := generator.AutoDescription(rule)
-	if !strings.Contains(desc, "foo") {
-		t.Errorf("description missing token: %q", desc)
+	// Token sentence should be absent (rendered by rule-details.html).
+	if strings.Contains(desc, "foo") {
+		t.Errorf("description should not contain tokens: %q", desc)
 	}
-}
-
-func TestAutoDescription_TokensTruncateAt10(t *testing.T) {
-	rule := makeRule("Avoid", "existence", "error")
-	for i := 0; i < 15; i++ {
-		rule.Tokens = append(rule.Tokens, fmt.Sprintf("tok%d", i))
-	}
-	desc := generator.AutoDescription(rule)
-	if !strings.Contains(desc, "tok9") {
-		t.Errorf("should include 10th token tok9: %q", desc)
-	}
-	if strings.Contains(desc, "tok10") {
-		t.Errorf("should not include 11th token tok10: %q", desc)
-	}
-	if !strings.Contains(desc, "...") {
-		t.Errorf("should include truncation marker: %q", desc)
+	if strings.Contains(desc, "flags the following") {
+		t.Errorf("description should not contain token sentence: %q", desc)
 	}
 }
 
 func TestAutoDescription_WithSwap(t *testing.T) {
 	rule := makeRule("Terms", "substitution", "warning")
-	rule.Swap = map[string]string{"foo": "bar", "baz": "qux"}
+	rule.Swap = map[string]string{"adaptor": "adapter", "afterwards": "afterward"}
 	desc := generator.AutoDescription(rule)
-	if !strings.Contains(desc, "2") {
-		t.Errorf("description missing swap count: %q", desc)
+	// Should show concrete examples, not just count
+	if !strings.Contains(desc, "adapter") {
+		t.Errorf("description missing swap example: %q", desc)
+	}
+	if !strings.Contains(desc, "adaptor") {
+		t.Errorf("description missing swap key: %q", desc)
+	}
+	if !strings.Contains(desc, "2 substitutions total") {
+		t.Errorf("description missing swap total: %q", desc)
+	}
+}
+
+func TestAutoDescription_VerbByType(t *testing.T) {
+	cases := []struct {
+		extends string
+		verb    string
+	}{
+		{"existence", "flags"},
+		{"substitution", "suggests preferred alternatives for"},
+		{"occurrence", "limits"},
+		{"repetition", "limits repetition of"},
+		{"consistency", "enforces consistent usage of"},
+		{"conditional", "checks that"},
+		{"capitalization", "enforces capitalization of"},
+		{"metric", "evaluates readability of"},
+		{"script", "applies a custom check to"},
+		{"spelling", "checks spelling of"},
+		{"sequence", "detects patterns in"},
+	}
+	for _, tc := range cases {
+		rule := makeRule("TestRule", tc.extends, "warning")
+		rule.Message = "" // avoid message interference
+		desc := generator.AutoDescription(rule)
+		if !strings.Contains(desc, tc.verb) {
+			t.Errorf("AutoDescription(extends=%q) = %q, missing verb %q", tc.extends, desc, tc.verb)
+		}
+	}
+}
+
+func TestAutoDescription_UnrecognizedExtends(t *testing.T) {
+	rule := makeRule("TestRule", "futuristic", "warning")
+	rule.Message = ""
+	desc := generator.AutoDescription(rule)
+	if !strings.Contains(desc, "checks") {
+		t.Errorf("unrecognized extends should use 'checks' fallback: %q", desc)
+	}
+}
+
+func TestAutoDescription_ScopeInOpening(t *testing.T) {
+	rule := makeRule("Headings", "capitalization", "suggestion")
+	rule.Message = ""
+	rule.Scope = "heading"
+	desc := generator.AutoDescription(rule)
+	if !strings.Contains(desc, "heading") {
+		t.Errorf("description should contain scope 'heading': %q", desc)
+	}
+}
+
+func TestAutoDescription_MessageWithFormatVerbs(t *testing.T) {
+	rule := makeRule("Avoid", "existence", "error")
+	rule.Message = "Don't use '%s'."
+	desc := generator.AutoDescription(rule)
+	// The entire message has %s so nothing should be salvaged
+	if strings.Contains(desc, "Don't use") {
+		t.Errorf("message with %%s should be dropped: %q", desc)
+	}
+}
+
+func TestAutoDescription_MessageClean(t *testing.T) {
+	rule := makeRule("SentenceLength", "occurrence", "suggestion")
+	rule.Message = "Try to keep sentences short (< 30 words)."
+	rule.Scope = "sentence"
+	desc := generator.AutoDescription(rule)
+	if !strings.Contains(desc, "Try to keep sentences short") {
+		t.Errorf("clean message should be kept: %q", desc)
+	}
+}
+
+func TestAutoDescription_MessageMixed(t *testing.T) {
+	rule := makeRule("Avoid", "existence", "error")
+	rule.Message = "Don't use '%s'. See the A-Z word list for details."
+	desc := generator.AutoDescription(rule)
+	// The first sentence with %s should be dropped
+	if strings.Contains(desc, "Don't use") {
+		t.Errorf("sentence with %%s should be dropped: %q", desc)
+	}
+	// The second clean sentence should be kept
+	if !strings.Contains(desc, "See the A-Z word list for details") {
+		t.Errorf("clean sentence should be salvaged: %q", desc)
+	}
+}
+
+func TestAutoDescription_SwapSamplerExamples(t *testing.T) {
+	rule := makeRule("Terms", "substitution", "warning")
+	rule.Message = ""
+	rule.Swap = map[string]string{
+		"adaptor":                     "adapter",
+		"afterwards":                  "afterward",
+		"(?:agent|virtual assistant)": "personal digital assistant",
+	}
+	desc := generator.AutoDescription(rule)
+	// Should show non-regex examples
+	if !strings.Contains(desc, "adapter") {
+		t.Errorf("description missing swap example: %q", desc)
+	}
+	// Regex key should be filtered out
+	if strings.Contains(desc, "agent") {
+		t.Errorf("description should not show regex key: %q", desc)
+	}
+	if !strings.Contains(desc, "3 substitutions total") {
+		t.Errorf("description missing total count: %q", desc)
+	}
+}
+
+func TestAutoDescription_SwapSamplerOneEntry(t *testing.T) {
+	rule := makeRule("Terms", "substitution", "warning")
+	rule.Message = ""
+	rule.Swap = map[string]string{"adaptor": "adapter"}
+	desc := generator.AutoDescription(rule)
+	if !strings.Contains(desc, "Suggests using") {
+		t.Errorf("single-entry swap should use compact format: %q", desc)
+	}
+	if strings.Contains(desc, "total") {
+		t.Errorf("single-entry swap should not show total count: %q", desc)
+	}
+}
+
+func TestAutoDescription_SwapSamplerAllRegex(t *testing.T) {
+	rule := makeRule("Terms", "substitution", "warning")
+	rule.Message = ""
+	rule.Swap = map[string]string{
+		"(?:agent|virtual assistant)": "personal digital assistant",
+		"(?:drive C:|drive C>)":       "drive C",
+	}
+	desc := generator.AutoDescription(rule)
+	// All keys are regex, should fall back to count-only
+	if !strings.Contains(desc, "replacements for 2 terms") {
+		t.Errorf("all-regex swap should use count-only format: %q", desc)
+	}
+}
+
+func TestAutoDescription_NoTokenSentence(t *testing.T) {
+	rule := makeRule("Avoid", "existence", "error")
+	rule.Message = ""
+	rule.Tokens = []string{"foo", "bar", "baz"}
+	desc := generator.AutoDescription(rule)
+	if strings.Contains(desc, "flags the following patterns") {
+		t.Errorf("token sentence should be absent: %q", desc)
+	}
+}
+
+func TestAutoDescription_NoLinkSentence(t *testing.T) {
+	rule := makeRule("Avoid", "existence", "error")
+	rule.Message = ""
+	rule.Link = "https://example.com/style-guide"
+	desc := generator.AutoDescription(rule)
+	if strings.Contains(desc, "See the") {
+		t.Errorf("link sentence should be absent: %q", desc)
+	}
+	if strings.Contains(desc, "example.com") {
+		t.Errorf("link domain should be absent: %q", desc)
 	}
 }
 

@@ -6,64 +6,163 @@ import (
 	"github.com/larah/rulebound/internal/parser"
 )
 
-// ── linkDomain ────────────────────────────────────────────────────────────────
+// ── ruleVerb ──────────────────────────────────────────────────────────────────
 
-func TestLinkDomain_FullURL(t *testing.T) {
-	got := linkDomain("https://example.com/path/to/page")
-	if got != "example.com" {
-		t.Errorf("linkDomain(full URL) = %q, want %q", got, "example.com")
+func TestRuleVerb(t *testing.T) {
+	cases := []struct {
+		extends string
+		want    string
+	}{
+		{"existence", "flags"},
+		{"substitution", "suggests preferred alternatives for"},
+		{"occurrence", "limits"},
+		{"repetition", "limits repetition of"},
+		{"consistency", "enforces consistent usage of"},
+		{"conditional", "checks that"},
+		{"capitalization", "enforces capitalization of"},
+		{"metric", "evaluates readability of"},
+		{"script", "applies a custom check to"},
+		{"spelling", "checks spelling of"},
+		{"sequence", "detects patterns in"},
+		{"unknown", "checks"},
+		{"", "checks"},
+	}
+	for _, tc := range cases {
+		got := ruleVerb(tc.extends)
+		if got != tc.want {
+			t.Errorf("ruleVerb(%q) = %q, want %q", tc.extends, got, tc.want)
+		}
 	}
 }
 
-func TestLinkDomain_HTTPScheme(t *testing.T) {
-	got := linkDomain("http://docs.microsoft.com/en-us/style-guide")
-	if got != "docs.microsoft.com" {
-		t.Errorf("linkDomain(http URL) = %q, want %q", got, "docs.microsoft.com")
+// ── salvageMessage ────────────────────────────────────────────────────────────
+
+func TestSalvageMessage_CleanMessage(t *testing.T) {
+	got := salvageMessage("Try to keep sentences short (< 30 words).")
+	if got != "Try to keep sentences short (< 30 words)." {
+		t.Errorf("clean message should be kept verbatim: %q", got)
 	}
 }
 
-func TestLinkDomain_NoScheme(t *testing.T) {
-	got := linkDomain("example.com/path")
-	if got != "example.com" {
-		t.Errorf("linkDomain(no scheme) = %q, want %q", got, "example.com")
-	}
-}
-
-func TestLinkDomain_Empty(t *testing.T) {
-	got := linkDomain("")
+func TestSalvageMessage_AllFormatVerbs(t *testing.T) {
+	got := salvageMessage("Don't use '%s'.")
 	if got != "" {
-		t.Errorf("linkDomain(empty) = %q, want %q", got, "")
+		t.Errorf("all-format-verb message should return empty: %q", got)
 	}
 }
 
-func TestLinkDomain_WithPort(t *testing.T) {
-	got := linkDomain("https://example.com:8080/path")
-	// The implementation strips scheme and path, leaving host:port
-	if got != "example.com:8080" {
-		t.Errorf("linkDomain(with port) = %q, want %q", got, "example.com:8080")
+func TestSalvageMessage_MixedSentences(t *testing.T) {
+	got := salvageMessage("Don't use '%s'. See the A-Z word list for details.")
+	if got != "See the A-Z word list for details." {
+		t.Errorf("mixed message should keep clean sentence: %q", got)
 	}
 }
 
-func TestLinkDomain_MalformedURL(t *testing.T) {
-	// No path separator after host, so entire string after scheme strip is returned
-	got := linkDomain("https://example.com")
-	if got != "example.com" {
-		t.Errorf("linkDomain(no path) = %q, want %q", got, "example.com")
-	}
-}
-
-func TestLinkDomain_SchemeOnly(t *testing.T) {
-	// Edge case: just a scheme with nothing after it
-	got := linkDomain("https://")
+func TestSalvageMessage_PositionalFormatVerb(t *testing.T) {
+	got := salvageMessage("Avoid passive voice: '%[1]s %[2]s'.")
 	if got != "" {
-		t.Errorf("linkDomain(scheme only) = %q, want %q", got, "")
+		t.Errorf("positional format verb should be detected: %q", got)
 	}
 }
 
-func TestLinkDomain_NoPath(t *testing.T) {
-	got := linkDomain("example.com")
-	if got != "example.com" {
-		t.Errorf("linkDomain(bare domain) = %q, want %q", got, "example.com")
+func TestSalvageMessage_Empty(t *testing.T) {
+	got := salvageMessage("")
+	if got != "" {
+		t.Errorf("empty message should return empty: %q", got)
+	}
+}
+
+func TestSalvageMessage_WhitespaceOnly(t *testing.T) {
+	got := salvageMessage("   ")
+	if got != "" {
+		t.Errorf("whitespace-only message should return empty: %q", got)
+	}
+}
+
+// ── swapSampler ───────────────────────────────────────────────────────────────
+
+func TestSwapSampler_TwoPairs(t *testing.T) {
+	swap := map[string]string{
+		"adaptor":    "adapter",
+		"afterwards": "afterward",
+	}
+	got := swapSampler(swap)
+	if got == "" {
+		t.Fatal("swapSampler should return non-empty for 2-pair map")
+	}
+	// Should show examples with total count
+	if want := "2 substitutions total"; !contains(got, want) {
+		t.Errorf("swapSampler = %q, missing %q", got, want)
+	}
+	if !contains(got, "adapter") {
+		t.Errorf("swapSampler = %q, missing example value", got)
+	}
+}
+
+func TestSwapSampler_SinglePair(t *testing.T) {
+	swap := map[string]string{"adaptor": "adapter"}
+	got := swapSampler(swap)
+	if !contains(got, "Suggests using") {
+		t.Errorf("single-pair swap should use compact format: %q", got)
+	}
+	if contains(got, "total") {
+		t.Errorf("single-pair swap should not show total: %q", got)
+	}
+}
+
+func TestSwapSampler_AllRegex(t *testing.T) {
+	swap := map[string]string{
+		"(?:agent|virtual assistant)": "personal digital assistant",
+		"(?:drive C:|drive C>)":       "drive C",
+	}
+	got := swapSampler(swap)
+	if !contains(got, "replacements for 2 terms") {
+		t.Errorf("all-regex swap should fall back to count: %q", got)
+	}
+}
+
+func TestSwapSampler_FilterRegexShowPlain(t *testing.T) {
+	swap := map[string]string{
+		"adaptor":                     "adapter",
+		"(?:agent|virtual assistant)": "personal digital assistant",
+		"afterwards":                  "afterward",
+	}
+	got := swapSampler(swap)
+	// Should show plain-key examples
+	if !contains(got, "adapter") {
+		t.Errorf("should show plain-key example: %q", got)
+	}
+	// Should not show regex key content
+	if contains(got, "agent") {
+		t.Errorf("should filter regex key: %q", got)
+	}
+	if !contains(got, "3 substitutions total") {
+		t.Errorf("should show total including regex entries: %q", got)
+	}
+}
+
+func TestSwapSampler_AlphabeticalOrder(t *testing.T) {
+	swap := map[string]string{
+		"zebra":    "z-replacement",
+		"adaptor":  "adapter",
+		"backbone": "b-replacement",
+	}
+	got := swapSampler(swap)
+	// "adaptor" should come before "backbone" alphabetically
+	idxA := indexOf(got, "adaptor")
+	idxB := indexOf(got, "backbone")
+	if idxA < 0 || idxB < 0 {
+		t.Fatalf("both examples should appear: %q", got)
+	}
+	if idxA > idxB {
+		t.Errorf("examples should be alphabetical (adaptor before backbone): %q", got)
+	}
+}
+
+func TestSwapSampler_Empty(t *testing.T) {
+	got := swapSampler(map[string]string{})
+	if got != "" {
+		t.Errorf("empty swap should return empty: %q", got)
 	}
 }
 
@@ -250,4 +349,19 @@ func TestAggregateCounts_NoCategoryFallsBackToExtends(t *testing.T) {
 	if byCategory["substitution"] != 1 {
 		t.Errorf("byCategory[substitution] = %d, want 1", byCategory["substitution"])
 	}
+}
+
+// ── test helpers ──────────────────────────────────────────────────────────────
+
+func contains(s, substr string) bool {
+	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
+}
+
+func indexOf(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
 }

@@ -4,6 +4,7 @@ package generator
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -65,73 +66,156 @@ func DisplayName(name string) string {
 // AutoDescription generates a human-readable description for a rule when no
 // companion Markdown file is present.
 //
-// Format:
+// The description consists of up to three parts:
+//  1. A behavioral opening sentence using a verb derived from the rule type.
+//  2. Salvaged static sentences from the rule message (sentences containing
+//     format verbs like %s are dropped since Hugo renders those separately).
+//  3. A swap-map sampler showing up to 2 concrete examples for substitution rules.
 //
-//	{DisplayName} is a {level} {extends} rule. {message without %s}.
-//	[See the [{link_domain}]({link}) for details.]
-//	[This rule flags the following patterns: {first 10 tokens}.]
-//	[This rule suggests replacements for {count} terms.]
+// Token-list and link sentences are omitted because Hugo's rule-details.html
+// partial and single.html header already render that data.
 func AutoDescription(rule *parser.ValeRule) string {
 	var parts []string
 
+	// R1: Type-aware behavioral verb opening.
 	displayName := DisplayName(rule.Name)
-	msg := strings.ReplaceAll(rule.Message, "'%s'", "")
-	msg = strings.ReplaceAll(msg, "%s", "")
-	msg = strings.TrimSpace(msg)
-	// Remove double spaces that may result from stripping %s
-	for strings.Contains(msg, "  ") {
-		msg = strings.ReplaceAll(msg, "  ", " ")
+	verb := ruleVerb(rule.Extends)
+	scope := rule.Scope
+	if scope == "" {
+		scope = "text"
 	}
+	parts = append(parts, fmt.Sprintf("%s %s %s.", displayName, verb, scope))
 
-	base := fmt.Sprintf("%s is a %s %s rule.", displayName, rule.Level, rule.Extends)
-	if msg != "" && msg != "." {
-		// Strip trailing period from base and append message.
-		base = strings.TrimSuffix(base, ".") + " " + msg
-		if !strings.HasSuffix(base, ".") {
-			base += "."
+	// R2: Conditional message inclusion (salvage clean sentences).
+	if rule.Message != "" {
+		if salvaged := salvageMessage(rule.Message); salvaged != "" {
+			parts = append(parts, salvaged)
 		}
 	}
-	parts = append(parts, base)
 
-	if rule.Link != "" {
-		domain := linkDomain(rule.Link)
-		parts = append(parts, fmt.Sprintf("See the [%s](%s) for details.", domain, rule.Link))
-	}
-
-	if len(rule.Tokens) > 0 {
-		tokens := rule.Tokens
-		suffix := ""
-		if len(tokens) > 10 {
-			tokens = tokens[:10]
-			suffix = "..."
-		}
-		quoted := make([]string, len(tokens))
-		for i, tok := range tokens {
-			quoted[i] = fmt.Sprintf("`%s`", tok)
-		}
-		parts = append(parts, fmt.Sprintf("This rule flags the following patterns: %s%s.", strings.Join(quoted, ", "), suffix))
-	}
-
+	// R3: Swap-map sampler (replaces old count-only sentence).
 	if len(rule.Swap) > 0 {
-		parts = append(parts, fmt.Sprintf("This rule suggests replacements for %d terms.", len(rule.Swap)))
+		if sample := swapSampler(rule.Swap); sample != "" {
+			parts = append(parts, sample)
+		}
 	}
+
+	// R4: Token list and link sentences are removed entirely.
+	// Tokens are rendered by rule-details.html.
+	// Links are rendered as "Style guide reference" in single.html header.
 
 	return strings.Join(parts, " ")
 }
 
-// linkDomain extracts the hostname from a URL string.
-// Falls back to the full URL if parsing fails.
-func linkDomain(link string) string {
-	// Strip scheme
-	s := link
-	if idx := strings.Index(s, "://"); idx != -1 {
-		s = s[idx+3:]
+// ruleVerb returns the behavioral verb phrase for a given extends type.
+func ruleVerb(extends string) string {
+	switch extends {
+	case "existence":
+		return "flags"
+	case "substitution":
+		return "suggests preferred alternatives for"
+	case "occurrence":
+		return "limits"
+	case "repetition":
+		return "limits repetition of"
+	case "consistency":
+		return "enforces consistent usage of"
+	case "conditional":
+		return "checks that"
+	case "capitalization":
+		return "enforces capitalization of"
+	case "metric":
+		return "evaluates readability of"
+	case "script":
+		return "applies a custom check to"
+	case "spelling":
+		return "checks spelling of"
+	case "sequence":
+		return "detects patterns in"
+	default:
+		return "checks"
 	}
-	// Strip path
-	if idx := strings.Index(s, "/"); idx != -1 {
-		s = s[:idx]
+}
+
+// salvageMessage splits a message on sentence boundaries and returns only
+// sentences that do not contain format verbs (%s, %[N]s). Returns empty
+// string if all sentences contain format verbs or if the input is empty.
+func salvageMessage(msg string) string {
+	msg = strings.TrimSpace(msg)
+	if msg == "" {
+		return ""
 	}
-	return s
+
+	// Split on sentence boundaries.
+	sentences := strings.Split(msg, ". ")
+
+	var kept []string
+	for _, s := range sentences {
+		if !strings.Contains(s, "%s") && !strings.Contains(s, "%[") {
+			kept = append(kept, s)
+		}
+	}
+
+	if len(kept) == 0 {
+		return ""
+	}
+
+	result := strings.Join(kept, ". ")
+	// Ensure terminal period.
+	result = strings.TrimRight(result, ".")
+	if result != "" {
+		result += "."
+	}
+	return result
+}
+
+// swapSampler returns a sentence with up to 2 concrete swap examples plus
+// total count. Filters out regex-heavy keys (containing metacharacters).
+// Returns empty string for empty maps.
+func swapSampler(swap map[string]string) string {
+	total := len(swap)
+	if total == 0 {
+		return ""
+	}
+
+	// Sort keys alphabetically for deterministic output.
+	keys := make([]string, 0, total)
+	for k := range swap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Collect up to 2 non-regex examples.
+	type example struct {
+		from string
+		to   string
+	}
+	var examples []example
+	for _, k := range keys {
+		if len(examples) >= 2 {
+			break
+		}
+		if strings.ContainsAny(k, "()[]{}+*?\\|") {
+			continue
+		}
+		examples = append(examples, example{from: k, to: swap[k]})
+	}
+
+	switch {
+	case len(examples) == 0:
+		// All keys are regex patterns; fall back to count-only.
+		return fmt.Sprintf("This rule suggests replacements for %d terms.", total)
+	case total == 1:
+		// Single-entry swap map: compact format without total count.
+		return fmt.Sprintf("Suggests using '%s' instead of '%s'.", examples[0].to, examples[0].from)
+	default:
+		// 1-2 examples with total count.
+		var pairs []string
+		for _, ex := range examples {
+			pairs = append(pairs, fmt.Sprintf("'%s' instead of '%s'", ex.to, ex.from))
+		}
+		return fmt.Sprintf("For example, use %s (%d substitutions total).", strings.Join(pairs, ", "), total)
+	}
 }
 
 // frontmatterData is the ordered representation written to Hugo frontmatter.
