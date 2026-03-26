@@ -3,6 +3,7 @@
 
 # Generated site output
 /public/
+/demo-site/
 
 # Go test cache artifacts
 *.test
