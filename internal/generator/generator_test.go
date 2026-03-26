@@ -624,6 +624,94 @@ func TestGenerateSite_NoGuidelines_NoGuidelinesDir(t *testing.T) {
 	}
 }
 
+func TestGenerateIndex_SiteJSON_WithGuidelines(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Body: "Content."},
+			{Name: "inclusive", Title: "Inclusive Language", Body: "Content."},
+		},
+	}
+	cfg := &config.Config{
+		Title:   "Test Guide",
+		BaseURL: "/",
+		Guidelines: config.GuidelinesConfig{
+			SectionTitle: "Editorial Guidelines",
+		},
+	}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	data := readFile(t, filepath.Join(outDir, "data", "site.json"))
+	var stats map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &stats); err != nil {
+		t.Fatalf("site.json is not valid JSON: %v", err)
+	}
+
+	gc, ok := stats["guidelines_count"]
+	if !ok {
+		t.Fatal("site.json missing guidelines_count")
+	}
+	if int(gc.(float64)) != 2 {
+		t.Errorf("guidelines_count = %v, want 2", gc)
+	}
+
+	gst, ok := stats["guidelines_section_title"]
+	if !ok {
+		t.Fatal("site.json missing guidelines_section_title")
+	}
+	if gst != "Editorial Guidelines" {
+		t.Errorf("guidelines_section_title = %v, want 'Editorial Guidelines'", gst)
+	}
+}
+
+func TestGenerateIndex_SiteJSON_NoGuidelines_OmitsFields(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	data := readFile(t, filepath.Join(outDir, "data", "site.json"))
+	var stats map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &stats); err != nil {
+		t.Fatalf("site.json is not valid JSON: %v", err)
+	}
+
+	if _, ok := stats["guidelines_count"]; ok {
+		t.Error("site.json should omit guidelines_count when 0")
+	}
+}
+
+func TestGenerateIndex_HomepageWithGuidelines(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Body: "Content."},
+		},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	index := readFile(t, filepath.Join(outDir, "content", "_index.md"))
+	if !strings.Contains(index, "guidelines_count: 1") {
+		t.Errorf("homepage _index.md should contain guidelines_count: %s", index)
+	}
+}
+
 func TestGenerateSite_GuidelinesDisabled(t *testing.T) {
 	outDir := t.TempDir()
 	disabled := false

@@ -73,32 +73,11 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		return err
 	}
 
-	// content/_index.md (homepage)
-	if err := generateHomepageIndex(cfg, rules, outputDir); err != nil {
-		return err
-	}
-
-	// content/rules/_index.md
-	if err := generateRulesIndex(rules, rulesDir); err != nil {
-		return err
-	}
-
-	// data/site.json
-	if err := generateSiteJSON(rules, dataDir); err != nil {
-		return err
-	}
-
-	// One content page per rule.
-	for _, rule := range rules {
-		if err := GenerateRule(rule, rulesDir); err != nil {
-			return err
-		}
-	}
-
 	// ── Guidelines ───────────────────────────────────────────────────────
 	// Check if guidelines are enabled (default: true when Enabled is nil).
 	guidelinesEnabled := cfg.Guidelines.Enabled == nil || *cfg.Guidelines.Enabled
 	guidelines := result.Guidelines
+	guidelinesCount := 0
 
 	if guidelinesEnabled && len(guidelines) > 0 {
 		// Apply ordering and exclusion from config.
@@ -108,6 +87,7 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		for _, w := range guidelineWarnings {
 			fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
 		}
+		guidelinesCount = len(guidelines)
 
 		if len(guidelines) > 0 {
 			guidelinesDir := filepath.Join(outputDir, "content", "guidelines")
@@ -125,6 +105,30 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 					return err
 				}
 			}
+		}
+	}
+
+	sectionTitle := cfg.Guidelines.SectionTitle
+
+	// content/_index.md (homepage)
+	if err := generateHomepageIndex(cfg, rules, guidelinesCount, outputDir); err != nil {
+		return err
+	}
+
+	// content/rules/_index.md
+	if err := generateRulesIndex(rules, rulesDir); err != nil {
+		return err
+	}
+
+	// data/site.json
+	if err := generateSiteJSON(rules, guidelinesCount, sectionTitle, dataDir); err != nil {
+		return err
+	}
+
+	// One content page per rule.
+	for _, rule := range rules {
+		if err := GenerateRule(rule, rulesDir); err != nil {
+			return err
 		}
 	}
 
