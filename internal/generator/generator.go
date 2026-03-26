@@ -95,6 +95,39 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		}
 	}
 
+	// ── Guidelines ───────────────────────────────────────────────────────
+	// Check if guidelines are enabled (default: true when Enabled is nil).
+	guidelinesEnabled := cfg.Guidelines.Enabled == nil || *cfg.Guidelines.Enabled
+	guidelines := result.Guidelines
+
+	if guidelinesEnabled && len(guidelines) > 0 {
+		// Apply ordering and exclusion from config.
+		var guidelineWarnings []parser.ParseWarning
+		guidelines, guidelineWarnings = applyGuidelinesConfig(guidelines, cfg.Guidelines)
+		// Log config validation warnings (e.g., unmatched order stems) to stderr.
+		for _, w := range guidelineWarnings {
+			fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
+		}
+
+		if len(guidelines) > 0 {
+			guidelinesDir := filepath.Join(outputDir, "content", "guidelines")
+			if err := os.MkdirAll(guidelinesDir, 0o755); err != nil {
+				return fmt.Errorf("creating guidelines directory: %w", err)
+			}
+
+			sectionTitle := cfg.Guidelines.SectionTitle
+			if err := generateGuidelinesIndex(sectionTitle, guidelinesDir); err != nil {
+				return err
+			}
+
+			for _, g := range guidelines {
+				if err := GenerateGuideline(g, guidelinesDir); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

@@ -569,3 +569,82 @@ func TestAssignCategories_UnassignedFallsBackToExtends(t *testing.T) {
 		t.Errorf("unassigned rule should fall back to extends %q, got: %q", "spelling", rules[0].Category)
 	}
 }
+
+// ── GenerateSite with guidelines ──────────────────────────────────────────────
+
+func TestGenerateSite_WithGuidelines(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Weight: 10, Body: "Write clearly."},
+			{Name: "inclusive-language", Title: "Inclusive Language", Weight: 20, Body: "Be inclusive."},
+		},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// content/guidelines/_index.md
+	indexPath := filepath.Join(outDir, "content", "guidelines", "_index.md")
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		t.Error("expected content/guidelines/_index.md")
+	}
+
+	// content/guidelines/voice-and-tone.md
+	vtPath := filepath.Join(outDir, "content", "guidelines", "voice-and-tone.md")
+	if _, err := os.Stat(vtPath); os.IsNotExist(err) {
+		t.Error("expected content/guidelines/voice-and-tone.md")
+	}
+
+	vtContent := readFile(t, vtPath)
+	if !strings.Contains(vtContent, "type: guideline") {
+		t.Errorf("guideline page missing type: guideline: %s", vtContent)
+	}
+}
+
+func TestGenerateSite_NoGuidelines_NoGuidelinesDir(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	guidelinesDir := filepath.Join(outDir, "content", "guidelines")
+	if _, err := os.Stat(guidelinesDir); !os.IsNotExist(err) {
+		t.Error("content/guidelines/ should not exist when there are no guidelines")
+	}
+}
+
+func TestGenerateSite_GuidelinesDisabled(t *testing.T) {
+	outDir := t.TempDir()
+	disabled := false
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Body: "Content."},
+		},
+	}
+	cfg := &config.Config{
+		Title:      "Test Guide",
+		BaseURL:    "/",
+		Guidelines: config.GuidelinesConfig{Enabled: &disabled},
+	}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	guidelinesDir := filepath.Join(outDir, "content", "guidelines")
+	if _, err := os.Stat(guidelinesDir); !os.IsNotExist(err) {
+		t.Error("content/guidelines/ should not exist when guidelines are disabled")
+	}
+}
