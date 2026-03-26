@@ -43,14 +43,14 @@ func DisplayName(name string) string {
 			continue
 		}
 		prev := runes[i-1]
-		// Determine if we insert a space before runes[i].
+		// Determine whether to insert a space before runes[i].
 		if unicode.IsUpper(cur) {
 			if unicode.IsLower(prev) {
-				// e.g. "g" → "P" in "HeadingPunctuation"
+				// for example, "g" → "P" in "HeadingPunctuation"
 				b.WriteRune(' ')
 			} else if unicode.IsUpper(prev) {
 				// Consecutive uppercase: only split if the *next* char is lowercase,
-				// meaning cur starts a new titlecase word (e.g. "RL" in "URLFormat"
+				// meaning cur starts a new titlecase word (for example, "RL" in "URLFormat"
 				// → split before "F").
 				if i+1 < n && unicode.IsLower(runes[i+1]) {
 					b.WriteRune(' ')
@@ -135,8 +135,8 @@ func linkDomain(link string) string {
 }
 
 // frontmatterData is the ordered representation written to Hugo frontmatter.
-// We use yaml.Marshal so special characters (backslashes, colons, brackets)
-// are handled correctly by the YAML library rather than ad-hoc string templates.
+// yaml.Marshal handles special characters (backslashes, colons, brackets)
+// correctly, avoiding ad-hoc string templates.
 type frontmatterData struct {
 	Title      string            `yaml:"title"`
 	Extends    string            `yaml:"extends"`

@@ -73,7 +73,7 @@ func generateGuidelinesIndex(sectionTitle string, guidelinesDir string) error {
 }
 
 // applyGuidelinesConfig filters and reweights guidelines based on config.
-// Returns the processed guidelines and any warnings (e.g., unmatched order stems).
+// It returns the processed guidelines and any warnings (for example, unmatched order stems).
 func applyGuidelinesConfig(guidelines []*parser.Guideline, cfg config.GuidelinesConfig) ([]*parser.Guideline, []parser.ParseWarning) {
 	var warnings []parser.ParseWarning
 

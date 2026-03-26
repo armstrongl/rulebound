@@ -8,9 +8,9 @@ import (
 )
 
 // readCompanion looks for a .md file with the same basename as ymlPath.
-// If found, it reads the file, strips any YAML frontmatter (--- delimited),
-// and returns the body content trimmed of leading/trailing whitespace.
-// If no companion file exists, it returns ("", nil).
+// If the file exists, readCompanion reads it, strips any YAML frontmatter
+// (--- delimited), and returns the body content trimmed of leading/trailing
+// whitespace. If no companion file exists, it returns ("", nil).
 func readCompanion(ymlPath string) (string, error) {
 	ext := filepath.Ext(ymlPath)
 	mdPath := ymlPath[:len(ymlPath)-len(ext)] + ".md"
@@ -28,9 +28,9 @@ func readCompanion(ymlPath string) (string, error) {
 }
 
 // stripFrontmatter removes a leading YAML frontmatter block (--- ... ---) from
-// Markdown content. Hugo shortcodes are not interpreted; the raw Markdown body
-// is returned as-is. If no frontmatter is present, the original content is
-// returned unchanged.
+// Markdown content. It does not interpret Hugo shortcodes; it returns the raw
+// Markdown body as-is. If no frontmatter is present, stripFrontmatter returns
+// the original content unchanged.
 func stripFrontmatter(content string) string {
 	const fence = "---"
 

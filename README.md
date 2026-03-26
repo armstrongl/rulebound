@@ -4,11 +4,13 @@ Generate static style guide websites from Vale linting packages.
 
 ## What it does
 
-rulebound takes a directory of Vale YAML rule definitions, parses them, and produces a complete static website documenting every rule. The generated site includes taxonomy pages organized by category, rule type, and severity level, along with responsive design, sidebar navigation, and optional Pagefind client-side search.
+rulebound takes a directory of Vale YAML rule definitions, parses them, and produces a static website documenting every rule. The site includes taxonomy pages organized by category, rule type, and severity level, along with responsive design, sidebar navigation, and optional Pagefind client-side search.
 
 Packages can also include editorial guidelines — prose-based Markdown files in a `guidelines/` subdirectory that appear as a separate section alongside the rules.
 
 ## Quick start
+
+Generate a style guide site from a Vale package:
 
 ```sh
 rulebound build ./my-vale-package --output ./public/
@@ -16,19 +18,21 @@ rulebound build ./my-vale-package --output ./public/
 
 ## Requirements
 
+rulebound requires the following dependencies:
+
 - **Go 1.22+** (to build from source)
 - **Hugo >= 0.128.0** (extended edition recommended)
 - **Pagefind** (optional, for client-side search indexing)
 
 ## Installation
 
-From source:
+Install from source:
 
 ```sh
 go install github.com/larah/rulebound@latest
 ```
 
-Or clone the repository and use the Makefile:
+Clone the repository and use the Makefile:
 
 ```sh
 make build    # compile to ./rulebound
@@ -39,7 +43,7 @@ make install  # install to $GOPATH/bin
 
 ### `rulebound build <package-path>`
 
-Build a static style guide website from a Vale rule package.
+Build a static style guide site from a Vale rule package.
 
 | Flag | Short | Default | Description |
 | --- | --- | --- | --- |
@@ -55,7 +59,7 @@ Print the current version and exit.
 
 ## Configuration
 
-Place a `rulebound.yml` file in the root of your Vale package directory, or pass one explicitly with `--config`. The configuration file is optional; sensible defaults are applied when it is absent.
+Place a `rulebound.yml` file in the root of your Vale package directory, or pass one with `--config`. The configuration file is optional. rulebound applies defaults when it is absent.
 
 ```yaml
 title: My Style Guide
@@ -76,29 +80,33 @@ guidelines:
     - draft-notes
 ```
 
+The following fields are available:
+
 | Field | Default | Description |
 | --- | --- | --- |
-| `title` | Package directory name | Human-readable name of the style guide |
+| `title` | Package directory name | Display name of the style guide |
 | `description` | (empty) | Short description displayed on the site |
 | `baseURL` | `/` | Base URL for the generated Hugo site |
 | `categories` | Group by rule type | Map of category names to lists of rule identifiers. A rule may appear in multiple categories. |
 | `guidelines.section_title` | `Guidelines` | Sidebar heading for the guidelines section |
-| `guidelines.order` | Alphabetical | Explicit page ordering by filename stem |
+| `guidelines.order` | Alphabetical | Page ordering by filename stem |
 | `guidelines.exclude` | (none) | Filename stems to skip (takes precedence over order) |
 | `guidelines.enabled` | `true` | Set to `false` to suppress guideline generation even when files exist |
 
 ## How it works
 
+rulebound builds the site in six stages:
+
 1. **Parse** -- Reads all Vale YAML rule files in the package directory (supports all 11 extension types). Also reads editorial guidelines from a `guidelines/` subdirectory.
 2. **Companion docs** -- Reads companion `.md` files alongside each rule for custom documentation content.
 3. **Generate** -- Produces Hugo content files with frontmatter and taxonomy terms for each rule, plus guideline pages with their own layout.
-4. **Scaffold** -- Creates a complete Hugo project in a temporary directory with an embedded theme.
+4. **Scaffold** -- Creates a Hugo project in a temporary directory with an embedded theme.
 5. **Build** -- Runs Hugo to compile the static site into the output directory.
-6. **Search index** -- Optionally runs Pagefind to generate a client-side search index.
+6. **Search index** -- If Pagefind is installed, runs it to generate a client-side search index.
 
 ## Editorial guidelines
 
-Add prose-based writing guidelines alongside your Vale rules by placing Markdown files in a `guidelines/` subdirectory of your package:
+To add prose-based writing guidelines alongside your Vale rules, place Markdown files in a `guidelines/` subdirectory of your package:
 
 ```
 my-vale-package/
@@ -122,13 +130,15 @@ weight: 10
 Write with clarity and confidence. Avoid jargon.
 ```
 
+The following frontmatter fields are available:
+
 | Field | Required | Description |
 | --- | --- | --- |
 | `title` | Yes | Page title displayed in sidebar and heading |
 | `description` | No | Short summary shown in the guidelines index |
 | `weight` | No | Sort order (lower values appear first, default: 0) |
 
-Guidelines appear in a dedicated sidebar section and have their own index page at `/guidelines/`. Files without a `title` in frontmatter, with malformed YAML, or with non-`.md` extensions are skipped. Subdirectories inside `guidelines/` are ignored.
+Guidelines appear in a dedicated sidebar section and have their own index page at `/guidelines/`. rulebound skips files without a `title` in frontmatter, files with malformed YAML, and files with non-`.md` extensions. rulebound ignores subdirectories inside `guidelines/`.
 
 ## Supported Vale rule types
 
@@ -148,6 +158,8 @@ rulebound parses all 11 Vale extension types:
 
 ## Exit codes
 
+rulebound returns the following exit codes:
+
 | Code | Meaning                           |
 | ---- | --------------------------------- |
 | 0    | Success                           |
@@ -157,6 +169,8 @@ rulebound parses all 11 Vale extension types:
 | 4    | Hugo build failure                |
 
 ## Project structure
+
+The repository is organized as follows:
 
 ```
 cmd/           CLI commands (root, build)
@@ -169,6 +183,8 @@ internal/
 
 ## Development
 
+Run tests and build the binary with the following commands:
+
 ```sh
 make test       # run all tests
 make build      # compile binary
@@ -177,4 +193,4 @@ go test ./...   # run tests directly
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+Refer to [LICENSE](LICENSE) for details.

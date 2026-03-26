@@ -2,7 +2,7 @@
 // producing a structured [ValeRule] for downstream content generation.
 package parser
 
-// Known extends constants for Vale rule types.
+// Extends constants for Vale rule types.
 const (
 	ExtendsExistence      = "existence"
 	ExtendsSubstitution   = "substitution"
@@ -18,13 +18,13 @@ const (
 )
 
 // ValeRule is the unified in-memory representation of a parsed Vale rule file.
-// Fields are populated according to the rule's extends type; unused fields
-// remain at their zero values.
+// ParseRule populates fields according to the rule's extends type; unused
+// fields remain at their zero values.
 type ValeRule struct {
-	// Name is derived from the filename without extension (e.g., "Avoid").
+	// Name is the rule name derived from the filename without extension (for example, "Avoid").
 	Name string
 
-	// Extends is the rule type: one of the Extends* constants or an unknown string.
+	// Extends identifies the rule type: one of the Extends* constants or an unrecognized string.
 	Extends string
 
 	// Message is the human-readable message template shown to writers.
@@ -36,7 +36,7 @@ type ValeRule struct {
 	// Link is an optional URL to the source style guide.
 	Link string
 
-	// Scope limits the rule to a document scope (sentence, heading, paragraph, etc.).
+	// Scope limits the rule to a document scope (sentence, heading, paragraph, and so on).
 	Scope string
 
 	// Ignorecase controls case-insensitive token matching.
@@ -48,7 +48,7 @@ type ValeRule struct {
 	// Raw holds regex patterns used alongside tokens (existence rules).
 	Raw []string
 
-	// Action is an optional action attached to the rule (e.g., replace, remove).
+	// Action is an optional action attached to the rule (for example, replace, remove).
 	Action *Action
 
 	// ── Type-specific fields ────────────────────────────────────────────────
@@ -68,7 +68,7 @@ type ValeRule struct {
 	// Exceptions lists allowed exclusions (conditional, capitalization).
 	Exceptions []string
 
-	// Match is the capitalization style token (e.g., "$sentence").
+	// Match is the capitalization style token (for example, "$sentence").
 	Match string
 
 	// Indicators lists punctuation that resets capitalization tracking.
@@ -89,7 +89,7 @@ type ValeRule struct {
 	// Formula is an arithmetic expression to evaluate (metric).
 	Formula string
 
-	// Condition is the comparison expression for metric rules (e.g., "> 10").
+	// Condition is the comparison expression for metric rules (for example, "> 10").
 	Condition string
 
 	// Pattern is the structural pattern for sequence rules.
@@ -119,8 +119,8 @@ type ValeRule struct {
 	// frontmatter stripped. Empty if no companion file exists.
 	CompanionMD string
 
-	// Category is assigned from the rulebound.yml categories configuration
-	// or inferred from the package directory name.
+	// Category comes from the rulebound.yml categories configuration
+	// or defaults to the package directory name.
 	Category string
 
 	// SourceFile is the absolute path of the original .yml source file.
@@ -132,19 +132,19 @@ type ValeRule struct {
 
 // Guideline represents a parsed editorial guideline Markdown file.
 type Guideline struct {
-	// Name is the stem name derived from the filename (e.g., "voice-and-tone").
+	// Name is the stem name derived from the filename (for example, "voice-and-tone").
 	Name string
 
-	// Title is from YAML frontmatter. Required.
+	// Title holds the title from YAML frontmatter. Required.
 	Title string
 
-	// Description is from YAML frontmatter. Optional.
+	// Description holds the description from YAML frontmatter. Optional.
 	Description string
 
 	// Weight controls sort order. Lower values sort first. Default: 0.
 	Weight int
 
-	// Body is the Markdown content after frontmatter extraction.
+	// Body holds the Markdown content after frontmatter extraction.
 	Body string
 
 	// SourceFile is the absolute path of the original .md file.

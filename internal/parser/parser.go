@@ -10,8 +10,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// knownFields is the set of top-level YAML keys that map to ValeRule struct
-// fields. Any key NOT in this set is stored in ValeRule.Extra.
+// knownFields lists top-level YAML keys that map to ValeRule struct fields.
+// The parser stores any key NOT in this set in ValeRule.Extra.
 var knownFields = map[string]bool{
 	"extends":      true,
 	"message":      true,
@@ -45,7 +45,7 @@ var knownFields = map[string]bool{
 }
 
 // rawRule is the intermediate YAML representation used during parsing.
-// Several fields use custom unmarshallers to handle Vale's polymorphic YAML
+// Several fields use custom unmarshalers to handle Vale's polymorphic YAML
 // syntax (action, swap, scope, tokens).
 type rawRule struct {
 	Extends      string            `yaml:"extends"`
@@ -218,10 +218,10 @@ func (a *rawAction) UnmarshalYAML(value *yaml.Node) error {
 }
 
 // ParseRule reads a single Vale rule .yml (or .yaml) file and returns a
-// populated *ValeRule. The companion .md file (same basename) is read
+// populated *ValeRule. It reads the companion .md file (same basename)
 // automatically when present.
 //
-// Errors are returned for:
+// ParseRule returns an error for:
 //   - file read errors
 //   - malformed YAML
 //   - empty YAML (nil document)
@@ -254,7 +254,7 @@ func ParseRule(filePath string) (*ValeRule, error) {
 	// ── Second pass: collect unknown fields into Extra ────────────────────
 	var rawMap map[string]interface{}
 	if err := yaml.Unmarshal(data, &rawMap); err != nil {
-		// Should not happen if the first pass succeeded, but guard anyway.
+		// This cannot happen if the first pass succeeded, but guard anyway.
 		return nil, fmt.Errorf("parsing extras in %s: %w", filePath, err)
 	}
 
@@ -320,7 +320,7 @@ func ParseRule(filePath string) (*ValeRule, error) {
 	return rule, nil
 }
 
-// ParseWarning records a non-fatal issue encountered during package parsing.
+// ParseWarning records a non-fatal issue that ParsePackage encounters during parsing.
 type ParseWarning struct {
 	File    string // The file that caused the warning
 	Message string // Human-readable description
@@ -328,10 +328,11 @@ type ParseWarning struct {
 
 // ParsePackage scans dir for .yml and .yaml files, parses each as a Vale rule,
 // and returns a *ParseResult with rules sorted by name, any parsed guidelines,
-// and warnings. Files that fail to parse (malformed YAML, missing extends, etc.)
-// are skipped and reported as warnings. Non-YAML files (e.g., meta.json) are ignored.
+// and warnings. It skips files that fail to parse (malformed YAML, missing
+// extends, and so on) and reports them as warnings. It ignores non-YAML files
+// (for example, meta.json).
 //
-// Returns an error only if dir cannot be read.
+// ParsePackage returns an error only if dir cannot be read.
 func ParsePackage(dir string) (*ParseResult, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -385,7 +386,7 @@ func ParsePackage(dir string) (*ParseResult, error) {
 }
 
 // nameFromPath derives the rule name from a file path by stripping the
-// directory and extension (e.g., "/styles/Microsoft/Avoid.yml" → "Avoid").
+// directory and extension (for example, "/styles/Microsoft/Avoid.yml" becomes "Avoid").
 func nameFromPath(filePath string) string {
 	base := filepath.Base(filePath)
 	ext := filepath.Ext(base)

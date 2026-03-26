@@ -10,10 +10,10 @@ import (
 	"github.com/Masterminds/semver/v3"
 )
 
-// minHugoVersion is the minimum required Hugo version for building.
+// minHugoVersion is the minimum Hugo version required to build.
 const minHugoVersion = "0.128.0"
 
-// BuildError wraps a Hugo build error with an exit code for the CLI layer.
+// BuildError wraps a Hugo error with an exit code for the CLI layer.
 type BuildError struct {
 	ExitCode int
 	Message  string
@@ -32,15 +32,15 @@ func (e *BuildError) Unwrap() error {
 }
 
 // hugoVersionRegex extracts the semver portion from `hugo version` output.
-// Example: "hugo v0.159.0+extended+withdeploy darwin/arm64 ..." -> "0.159.0"
+// For example, "hugo v0.159.0+extended+withdeploy darwin/arm64 ..." yields "0.159.0".
 var hugoVersionRegex = regexp.MustCompile(`v(\d+\.\d+\.\d+)`)
 
-// FindHugo locates the Hugo binary. If hugoPath is non-empty, it is used
-// directly; otherwise Hugo is looked up on $PATH.
-// Returns the resolved path, or a *BuildError with exit code 3 on failure.
+// FindHugo locates the Hugo binary. If hugoPath is non-empty, FindHugo uses
+// it directly; otherwise it looks up Hugo on $PATH.
+// It returns the resolved path, or a *BuildError with exit code 3 on failure.
 func FindHugo(hugoPath string) (string, error) {
 	if hugoPath != "" {
-		// Check that the explicit path exists and is executable.
+		// Verify that the explicit path exists and is executable.
 		path, err := exec.LookPath(hugoPath)
 		if err != nil {
 			return "", &BuildError{
@@ -63,8 +63,8 @@ func FindHugo(hugoPath string) (string, error) {
 	return path, nil
 }
 
-// CheckHugoVersion runs `hugo version` and verifies the version is >= minHugoVersion.
-// Returns the parsed version string, or a *BuildError with exit code 3 on failure.
+// CheckHugoVersion runs `hugo version` and verifies that the version is at least minHugoVersion.
+// It returns the parsed version string, or a *BuildError with exit code 3 on failure.
 func CheckHugoVersion(hugoBin string) (string, error) {
 	cmd := exec.Command(hugoBin, "version")
 	var stdout bytes.Buffer
@@ -83,7 +83,7 @@ func CheckHugoVersion(hugoBin string) (string, error) {
 }
 
 // ParseAndCheckVersion extracts and validates a Hugo version string from
-// `hugo version` output. Exported for testing.
+// `hugo version` output. It is exported for use in tests.
 func ParseAndCheckVersion(output string) (string, error) {
 	matches := hugoVersionRegex.FindStringSubmatch(output)
 	if len(matches) < 2 {
@@ -122,7 +122,7 @@ func ParseAndCheckVersion(output string) (string, error) {
 	return versionStr, nil
 }
 
-// BuildResult holds the output of a Hugo build invocation.
+// BuildResult holds the captured output of a Hugo build invocation.
 type BuildResult struct {
 	// Stdout is the captured Hugo stdout output.
 	Stdout string
@@ -131,7 +131,7 @@ type BuildResult struct {
 }
 
 // Build runs `hugo build --source <sourceDir> --destination <destDir>`.
-// Returns a *BuildError with exit code 4 if Hugo exits non-zero.
+// It returns a *BuildError with exit code 4 if Hugo exits non-zero.
 func Build(hugoBin, sourceDir, destDir string) (*BuildResult, error) {
 	cmd := exec.Command(hugoBin, "build", "--source", sourceDir, "--destination", destDir)
 	var stdout, stderr bytes.Buffer
@@ -156,9 +156,9 @@ func Build(hugoBin, sourceDir, destDir string) (*BuildResult, error) {
 }
 
 // RunPagefind runs `pagefind --site <siteDir>` as a post-build step.
-// If pagefind is not found on $PATH, it returns (false, nil) for graceful
-// degradation. If pagefind is found and runs successfully, returns (true, nil).
-// On pagefind execution failure, returns (true, error).
+// If pagefind is not on $PATH, RunPagefind returns (false, nil) so the caller
+// can degrade gracefully. If pagefind runs successfully, it returns (true, nil).
+// On execution failure, it returns (true, error).
 func RunPagefind(siteDir string) (found bool, err error) {
 	pagefindBin, lookErr := exec.LookPath("pagefind")
 	if lookErr != nil {

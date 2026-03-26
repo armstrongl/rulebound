@@ -1,5 +1,5 @@
-// Package config handles loading and parsing of rulebound.yml configuration files.
-// The config file is optional; when absent, sensible defaults are applied.
+// Package config loads and parses rulebound.yml configuration files.
+// The config file is optional; when absent, the loader applies defaults.
 package config
 
 import (
@@ -11,17 +11,17 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Config holds the parsed contents of a rulebound.yml file.
+// Config represents the parsed contents of a rulebound.yml file.
 type Config struct {
 	// Title is the human-readable name of the style guide.
-	// Defaults to the package directory name when rulebound.yml is absent.
+	// Defaults to the package directory name when rulebound.yml is absent or omits it.
 	Title string `yaml:"title"`
 
 	// Description is an optional short description of the style guide.
 	Description string `yaml:"description"`
 
 	// BaseURL is the base URL for the generated Hugo site.
-	// Defaults to "/" when rulebound.yml is absent.
+	// Defaults to "/" when rulebound.yml is absent or omits it.
 	BaseURL string `yaml:"baseURL"`
 
 	// Categories maps category names to slices of rule identifiers.
@@ -32,7 +32,7 @@ type Config struct {
 	Guidelines GuidelinesConfig `yaml:"guidelines"`
 }
 
-// GuidelinesConfig controls how editorial guidelines are processed.
+// GuidelinesConfig controls how the build processes editorial guidelines.
 type GuidelinesConfig struct {
 	// SectionTitle overrides the sidebar heading. Default: "Guidelines".
 	SectionTitle string `yaml:"section_title"`
@@ -40,7 +40,7 @@ type GuidelinesConfig struct {
 	Order []string `yaml:"order"`
 	// Exclude skips specific files by stem name (takes precedence over order).
 	Exclude []string `yaml:"exclude"`
-	// Enabled controls auto-detection. Default: true (nil means not set = true).
+	// Enabled controls auto-detection. Default: true (nil means true).
 	Enabled *bool `yaml:"enabled"`
 }
 

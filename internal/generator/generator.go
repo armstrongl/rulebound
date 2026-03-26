@@ -83,7 +83,7 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		// Apply ordering and exclusion from config.
 		var guidelineWarnings []parser.ParseWarning
 		guidelines, guidelineWarnings = applyGuidelinesConfig(guidelines, cfg.Guidelines)
-		// Log config validation warnings (e.g., unmatched order stems) to stderr.
+		// Log config validation warnings (for example, unmatched order stems) to stderr.
 		for _, w := range guidelineWarnings {
 			fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
 		}

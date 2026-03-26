@@ -1,4 +1,4 @@
-// Package hugo handles Hugo theme embedding, project scaffolding, and build execution.
+// Package hugo embeds the Hugo theme, scaffolds temporary projects, and runs Hugo builds.
 package hugo
 
 import (
@@ -10,20 +10,20 @@ import (
 )
 
 // themeFS embeds the entire theme/ directory from the project root.
-// The all: prefix is CRITICAL — Go's embed silently excludes files and
-// directories starting with underscore (e.g., _default/) without it.
+// The all: prefix is required because Go's embed silently excludes files and
+// directories starting with underscore (for example, _default/) without it.
 //
 //go:embed all:theme
 var themeFS embed.FS
 
-// ThemeFS returns the embedded filesystem for testing purposes.
+// ThemeFS returns the embedded filesystem for use in tests.
 func ThemeFS() embed.FS {
 	return themeFS
 }
 
 // ExtractTheme copies the embedded theme into destDir (typically
-// tempDir/themes/rulebound/). It walks the embedded FS and recreates the
-// directory tree with all files.
+// tempDir/themes/rulebound/). It walks the embedded FS and recreates
+// the directory tree with all files.
 func ExtractTheme(destDir string) error {
 	return fs.WalkDir(themeFS, "theme", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -31,7 +31,7 @@ func ExtractTheme(destDir string) error {
 		}
 
 		// Strip the leading "theme/" prefix so that the extracted tree starts
-		// at destDir directly (e.g., destDir/hugo.toml, destDir/layouts/...).
+		// at destDir directly (for example, destDir/hugo.toml, destDir/layouts/...).
 		rel, err := filepath.Rel("theme", path)
 		if err != nil {
 			return fmt.Errorf("computing relative path for %s: %w", path, err)

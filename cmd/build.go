@@ -22,7 +22,7 @@ var (
 	buildStrict bool
 )
 
-// buildCmd is the `rulebound build` sub-command.
+// buildCmd defines the `rulebound build` sub-command.
 var buildCmd = &cobra.Command{
 	Use:   "build <package-path>",
 	Short: "Build a static style guide website from a Vale rule package",
@@ -41,8 +41,8 @@ func init() {
 	buildCmd.Flags().BoolVar(&buildStrict, "strict", false, "Treat warnings as errors")
 }
 
-// runBuild is the entry point for `rulebound build`.
-// Pipeline: validate → load config → parse rules → scaffold → Hugo build → Pagefind → done.
+// runBuild executes the `rulebound build` pipeline:
+// validate → load config → parse rules → scaffold → Hugo build → Pagefind → done.
 func runBuild(cmd *cobra.Command, args []string) error {
 	packagePath := args[0]
 
@@ -92,7 +92,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no valid rules found in %s", packagePath)
 	}
 
-	// In strict mode, any parse warnings are treated as errors.
+	// In strict mode, treat parse warnings as errors.
 	if buildStrict && len(result.Warnings) > 0 {
 		return &exitError{
 			code: ExitGeneral,
@@ -124,9 +124,9 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("scaffolding Hugo project: %w", err)
 	}
 
-	// Signal-aware cleanup: register handler BEFORE the build so temp dir
-	// gets cleaned up if the user presses Ctrl-C during Hugo execution.
-	// Note: defer os.RemoveAll does NOT run on os.Exit() or log.Fatal().
+	// Register a signal handler before the build so the temp dir is cleaned
+	// up if the user presses Ctrl-C during Hugo execution.
+	// defer os.RemoveAll does not run on os.Exit or log.Fatal.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -199,7 +199,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// exitError wraps an error with a specific exit code for the CLI.
+// exitError pairs an error with a specific exit code for the CLI.
 type exitError struct {
 	code int
 	err  error
@@ -214,7 +214,7 @@ func (e *exitError) Unwrap() error {
 }
 
 // mapBuildError converts a *hugo.BuildError to an *exitError for the CLI layer.
-// Non-BuildError errors are returned as-is.
+// Other error types pass through unchanged.
 func mapBuildError(err error) error {
 	if be, ok := err.(*hugobuilder.BuildError); ok {
 		return &exitError{code: be.ExitCode, err: be}

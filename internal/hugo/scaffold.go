@@ -10,7 +10,7 @@ import (
 	"github.com/larah/rulebound/internal/parser"
 )
 
-// ScaffoldResult holds the paths created during scaffolding.
+// ScaffoldResult holds the paths that Scaffold creates.
 type ScaffoldResult struct {
 	// TempDir is the root of the scaffolded Hugo project.
 	TempDir string
@@ -22,7 +22,7 @@ type ScaffoldResult struct {
 	DataDir string
 }
 
-// Scaffold creates a temporary Hugo project directory with the full structure:
+// Scaffold creates a temporary Hugo project directory with this structure:
 //
 //	tempDir/
 //	├── hugo.toml          (generated with theme = "rulebound")
@@ -57,25 +57,23 @@ func Scaffold(parseResult *parser.ParseResult, cfg *config.Config) (*ScaffoldRes
 		return result, fmt.Errorf("extracting theme: %w", err)
 	}
 
-	// 2. Use the generator to create content/, data/, and hugo.toml.
+	// 2. Generate content/, data/, and hugo.toml.
 	//    GenerateSite writes hugo.toml, content/_index.md, content/rules/*.md,
-	//    and data/site.json into the given output directory.
+	//    and data/site.json into the output directory.
 	if err := generator.GenerateSite(parseResult, cfg, tempDir); err != nil {
 		return result, fmt.Errorf("generating site content: %w", err)
 	}
 
-	// 3. Patch hugo.toml to add theme = "rulebound" as a TOP-LEVEL key.
-	//    The generator writes hugo.toml without a theme directive (Phase 3
-	//    didn't know the theme name). We must insert theme BEFORE any TOML
-	//    table headers (e.g., [taxonomies]) — appending would place it inside
-	//    the last table, which is invalid.
+	// 3. Patch hugo.toml to add theme = "rulebound" as a top-level key.
+	//    The generator writes hugo.toml without a theme directive, so we
+	//    prepend it before any TOML table headers (for example, [taxonomies]).
+	//    Appending would place it inside the last table, which is invalid.
 	hugoTomlPath := filepath.Join(tempDir, "hugo.toml")
 	existing, err := os.ReadFile(hugoTomlPath)
 	if err != nil {
 		return result, fmt.Errorf("reading hugo.toml for patching: %w", err)
 	}
-	// Insert theme line right after the existing top-level keys (before any
-	// [section] header). We find the first '[' at the start of a line.
+	// Prepend the theme line so it appears before any [section] header.
 	content := string(existing)
 	patched := "theme = \"rulebound\"\n" + content
 	if err := os.WriteFile(hugoTomlPath, []byte(patched), 0o644); err != nil {

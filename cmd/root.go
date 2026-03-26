@@ -1,4 +1,4 @@
-// Package cmd provides the CLI commands for rulebound.
+// Package cmd implements the CLI commands for rulebound.
 package cmd
 
 import (
@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version is the current rulebound version. This is replaced at build time via
+// Version is the current rulebound version, replaced at build time via
 // -ldflags "-X github.com/larah/rulebound/cmd.Version=<ver>".
 var Version = "dev"
 
-// Verbose holds the global --verbose flag value, shared across sub-commands.
+// Verbose holds the global --verbose flag value. All sub-commands read it.
 var Verbose bool
 
 // Exit codes per plan spec.
@@ -39,8 +39,7 @@ Usage example:
 }
 
 // Execute runs the root command and exits on failure.
-// Exit codes are determined by the error type: *exitError carries a specific
-// code, while other errors default to ExitGeneral.
+// An *exitError carries a specific exit code; other errors exit with ExitGeneral.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)

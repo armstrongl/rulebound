@@ -11,7 +11,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// guidelineFrontmatter is the YAML structure expected in guideline .md files.
+// guidelineFrontmatter holds the YAML structure that guideline .md files contain.
 type guidelineFrontmatter struct {
 	Title       string `yaml:"title"`
 	Description string `yaml:"description"`
@@ -19,7 +19,7 @@ type guidelineFrontmatter struct {
 }
 
 // parseFrontmatter extracts YAML frontmatter and body from a Markdown string.
-// Returns an error if no frontmatter is found or YAML is malformed.
+// It returns an error if no frontmatter is found or the YAML is malformed.
 func parseFrontmatter(content string) (*guidelineFrontmatter, string, error) {
 	const fence = "---"
 
@@ -56,8 +56,9 @@ func parseFrontmatter(content string) (*guidelineFrontmatter, string, error) {
 }
 
 // parseGuidelines reads all .md files from the guidelines/ subdirectory of
-// packageDir. Returns parsed guidelines and any non-fatal warnings.
-// If guidelines/ does not exist, returns empty results without error.
+// packageDir. It returns parsed guidelines sorted by name, along with any
+// non-fatal warnings. If guidelines/ does not exist, it returns empty results
+// without error.
 func parseGuidelines(packageDir string) ([]*Guideline, []ParseWarning, error) {
 	guidelinesDir := filepath.Join(packageDir, "guidelines")
 
