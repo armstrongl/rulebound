@@ -804,3 +804,65 @@ em.matched-text {
   .category-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: 1rem; }
 }
+
+/* ── Guideline pages ──────────────────────────────────────── */
+.guideline-page { max-width: var(--content-max); }
+
+.guideline-header { margin-bottom: 1.5rem; }
+
+.guideline-description {
+  font-size: 1.0625rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+.guideline-body { line-height: 1.7; }
+
+/* ── Guidelines list page ─────────────────────────────────── */
+.guidelines-list { max-width: var(--content-max); }
+
+.guidelines-intro {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.guidelines-index {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.guidelines-index-item { margin: 0; }
+
+.guidelines-index-link {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.guidelines-index-desc {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ── Guidelines sidebar section ───────────────────────────── */
+.sidebar-guidelines {
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 0.25rem;
+}
+
+/* ── Secondary button ─────────────────────────────────────── */
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-link);
+  border: 1px solid var(--color-border);
+}
+.btn-secondary:hover {
+  background: var(--color-border-light);
+  color: var(--color-link-hover);
+  text-decoration: none;
+}
