@@ -49,7 +49,9 @@ func GenerateRule(rule *parser.ValeRule, outDir string) error {
 //	│       └── <rule>.md  (one per rule)
 //	└── data/
 //	    └── site.json
-func GenerateSite(rules []*parser.ValeRule, cfg *config.Config, outputDir string) error {
+func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir string) error {
+	rules := result.Rules
+
 	// Assign categories from config before generating content.
 	AssignCategories(rules, cfg)
 
@@ -71,8 +73,45 @@ func GenerateSite(rules []*parser.ValeRule, cfg *config.Config, outputDir string
 		return err
 	}
 
+	// ── Guidelines ───────────────────────────────────────────────────────
+	// Check if guidelines are enabled (default: true when Enabled is nil).
+	guidelinesEnabled := cfg.Guidelines.Enabled == nil || *cfg.Guidelines.Enabled
+	guidelines := result.Guidelines
+	guidelinesCount := 0
+
+	if guidelinesEnabled && len(guidelines) > 0 {
+		// Apply ordering and exclusion from config.
+		var guidelineWarnings []parser.ParseWarning
+		guidelines, guidelineWarnings = applyGuidelinesConfig(guidelines, cfg.Guidelines)
+		// Log config validation warnings (e.g., unmatched order stems) to stderr.
+		for _, w := range guidelineWarnings {
+			fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
+		}
+		guidelinesCount = len(guidelines)
+
+		if len(guidelines) > 0 {
+			guidelinesDir := filepath.Join(outputDir, "content", "guidelines")
+			if err := os.MkdirAll(guidelinesDir, 0o755); err != nil {
+				return fmt.Errorf("creating guidelines directory: %w", err)
+			}
+
+			sectionTitle := cfg.Guidelines.SectionTitle
+			if err := generateGuidelinesIndex(sectionTitle, guidelinesDir); err != nil {
+				return err
+			}
+
+			for _, g := range guidelines {
+				if err := GenerateGuideline(g, guidelinesDir); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	sectionTitle := cfg.Guidelines.SectionTitle
+
 	// content/_index.md (homepage)
-	if err := generateHomepageIndex(cfg, rules, outputDir); err != nil {
+	if err := generateHomepageIndex(cfg, rules, guidelinesCount, outputDir); err != nil {
 		return err
 	}
 
@@ -82,7 +121,7 @@ func GenerateSite(rules []*parser.ValeRule, cfg *config.Config, outputDir string
 	}
 
 	// data/site.json
-	if err := generateSiteJSON(rules, dataDir); err != nil {
+	if err := generateSiteJSON(rules, guidelinesCount, sectionTitle, dataDir); err != nil {
 		return err
 	}
 

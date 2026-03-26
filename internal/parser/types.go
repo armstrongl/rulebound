@@ -130,6 +130,34 @@ type ValeRule struct {
 	Extra map[string]interface{}
 }
 
+// Guideline represents a parsed editorial guideline Markdown file.
+type Guideline struct {
+	// Name is the stem name derived from the filename (e.g., "voice-and-tone").
+	Name string
+
+	// Title is from YAML frontmatter. Required.
+	Title string
+
+	// Description is from YAML frontmatter. Optional.
+	Description string
+
+	// Weight controls sort order. Lower values sort first. Default: 0.
+	Weight int
+
+	// Body is the Markdown content after frontmatter extraction.
+	Body string
+
+	// SourceFile is the absolute path of the original .md file.
+	SourceFile string
+}
+
+// ParseResult holds all parsed content from a Vale package directory.
+type ParseResult struct {
+	Rules      []*ValeRule
+	Guidelines []*Guideline
+	Warnings   []ParseWarning
+}
+
 // Action represents an optional inline action attached to a Vale rule.
 type Action struct {
 	// Name is the action type: "replace", "remove", "edit", or "convert".

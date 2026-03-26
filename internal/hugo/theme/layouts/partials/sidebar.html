@@ -70,4 +70,29 @@
     {{- end -}}
   {{- end -}}
 
+  {{- /* ── Guidelines section ─────────────────────────────────── */ -}}
+  {{- $guidelines := where site.RegularPages "Type" "guideline" -}}
+  {{- if gt (len $guidelines) 0 -}}
+    {{- $siteData := index hugo.Data "site" -}}
+    <div class="sidebar-group sidebar-guidelines">
+      <h3 class="sidebar-group-title">
+        {{- with $siteData.guidelines_section_title -}}
+          {{ . }}
+        {{- else -}}
+          Guidelines
+        {{- end -}}
+      </h3>
+      <ul class="sidebar-list">
+        {{- range $guidelines.ByWeight -}}
+          {{- $active := eq $.RelPermalink .RelPermalink -}}
+          <li class="sidebar-item{{ if $active }} active{{ end }}">
+            <a href="{{ .RelPermalink }}" class="sidebar-link">
+              <span class="sidebar-link-text">{{ .Title }}</span>
+            </a>
+          </li>
+        {{- end -}}
+      </ul>
+    </div>
+  {{- end -}}
+
 </nav>

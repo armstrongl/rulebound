@@ -14,12 +14,13 @@ import (
 
 // homepageIndexData is the frontmatter for content/_index.md.
 type homepageIndexData struct {
-	Title       string         `yaml:"title"`
-	Description string         `yaml:"description,omitempty"`
-	TotalRules  int            `yaml:"total_rules"`
-	ByType      map[string]int `yaml:"by_type"`
-	BySeverity  map[string]int `yaml:"by_severity"`
-	ByCategory  map[string]int `yaml:"by_category"`
+	Title           string         `yaml:"title"`
+	Description     string         `yaml:"description,omitempty"`
+	TotalRules      int            `yaml:"total_rules"`
+	ByType          map[string]int `yaml:"by_type"`
+	BySeverity      map[string]int `yaml:"by_severity"`
+	ByCategory      map[string]int `yaml:"by_category"`
+	GuidelinesCount int            `yaml:"guidelines_count,omitempty"`
 }
 
 // rulesIndexData is the frontmatter for content/rules/_index.md.
@@ -33,23 +34,26 @@ type rulesIndexData struct {
 
 // siteStats is the data written to data/site.json.
 type siteStats struct {
-	TotalRules int            `json:"total_rules"`
-	ByType     map[string]int `json:"by_type"`
-	BySeverity map[string]int `json:"by_severity"`
-	ByCategory map[string]int `json:"by_category"`
+	TotalRules             int            `json:"total_rules"`
+	ByType                 map[string]int `json:"by_type"`
+	BySeverity             map[string]int `json:"by_severity"`
+	ByCategory             map[string]int `json:"by_category"`
+	GuidelinesCount        int            `json:"guidelines_count,omitempty"`
+	GuidelinesSectionTitle string         `json:"guidelines_section_title,omitempty"`
 }
 
 // generateHomepageIndex writes content/_index.md.
-func generateHomepageIndex(cfg *config.Config, rules []*parser.ValeRule, outputDir string) error {
+func generateHomepageIndex(cfg *config.Config, rules []*parser.ValeRule, guidelinesCount int, outputDir string) error {
 	byType, bySeverity, byCategory := aggregateCounts(rules)
 
 	data := homepageIndexData{
-		Title:       cfg.Title,
-		Description: cfg.Description,
-		TotalRules:  len(rules),
-		ByType:      byType,
-		BySeverity:  bySeverity,
-		ByCategory:  byCategory,
+		Title:           cfg.Title,
+		Description:     cfg.Description,
+		TotalRules:      len(rules),
+		ByType:          byType,
+		BySeverity:      bySeverity,
+		ByCategory:      byCategory,
+		GuidelinesCount: guidelinesCount,
 	}
 
 	out, err := yaml.Marshal(data)
@@ -91,14 +95,18 @@ func generateRulesIndex(rules []*parser.ValeRule, rulesDir string) error {
 }
 
 // generateSiteJSON writes data/site.json with aggregated statistics.
-func generateSiteJSON(rules []*parser.ValeRule, dataDir string) error {
+func generateSiteJSON(rules []*parser.ValeRule, guidelinesCount int, sectionTitle string, dataDir string) error {
 	byType, bySeverity, byCategory := aggregateCounts(rules)
 
 	stats := siteStats{
-		TotalRules: len(rules),
-		ByType:     byType,
-		BySeverity: bySeverity,
-		ByCategory: byCategory,
+		TotalRules:      len(rules),
+		ByType:          byType,
+		BySeverity:      bySeverity,
+		ByCategory:      byCategory,
+		GuidelinesCount: guidelinesCount,
+	}
+	if sectionTitle != "" {
+		stats.GuidelinesSectionTitle = sectionTitle
 	}
 
 	out, err := json.MarshalIndent(stats, "", "  ")

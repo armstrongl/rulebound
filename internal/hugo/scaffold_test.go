@@ -22,7 +22,7 @@ func TestScaffold_CreatesExpectedStructure(t *testing.T) {
 		BaseURL: "https://example.com/",
 	}
 
-	result, err := Scaffold(rules, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestScaffold_HugoTomlContainsTheme(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(rules, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestScaffold_ThemeExtracted(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(nil, cfg)
+	result, err := Scaffold(&parser.ParseResult{}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestScaffold_ContentFilesGenerated(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(rules, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestScaffold_ReturnsTempDir(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(nil, cfg)
+	result, err := Scaffold(&parser.ParseResult{}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestScaffold_DataDirContainsSiteJSON(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(rules, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}

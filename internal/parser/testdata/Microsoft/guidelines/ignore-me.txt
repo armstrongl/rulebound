@@ -1,0 +1,1 @@
+This is not a Markdown file and should be skipped silently.

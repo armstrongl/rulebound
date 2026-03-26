@@ -1,0 +1,13 @@
+{{- define "main" -}}
+<article class="guideline-page" data-pagefind-body>
+  <header class="guideline-header">
+    <h1 data-pagefind-meta="title">{{ .Title }}</h1>
+    {{- with .Params.description -}}
+      <p class="guideline-description">{{ . }}</p>
+    {{- end -}}
+  </header>
+  <section class="guideline-body">
+    {{ .Content }}
+  </section>
+</article>
+{{- end -}}

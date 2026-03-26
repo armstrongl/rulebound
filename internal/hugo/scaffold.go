@@ -36,7 +36,7 @@ type ScaffoldResult struct {
 //	    └── rulebound/     (extracted from embedded theme)
 //
 // The caller is responsible for cleaning up tempDir (see CleanupFunc).
-func Scaffold(rules []*parser.ValeRule, cfg *config.Config) (*ScaffoldResult, error) {
+func Scaffold(parseResult *parser.ParseResult, cfg *config.Config) (*ScaffoldResult, error) {
 	tempDir, err := os.MkdirTemp("", "rulebound-*")
 	if err != nil {
 		return nil, fmt.Errorf("creating temp directory: %w", err)
@@ -60,7 +60,7 @@ func Scaffold(rules []*parser.ValeRule, cfg *config.Config) (*ScaffoldResult, er
 	// 2. Use the generator to create content/, data/, and hugo.toml.
 	//    GenerateSite writes hugo.toml, content/_index.md, content/rules/*.md,
 	//    and data/site.json into the given output directory.
-	if err := generator.GenerateSite(rules, cfg, tempDir); err != nil {
+	if err := generator.GenerateSite(parseResult, cfg, tempDir); err != nil {
 		return result, fmt.Errorf("generating site content: %w", err)
 	}
 

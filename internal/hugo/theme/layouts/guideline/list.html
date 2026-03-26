@@ -1,0 +1,16 @@
+{{- define "main" -}}
+<div class="guidelines-list" data-pagefind-body>
+  <h1>{{ .Title | default "Guidelines" }}</h1>
+  {{- with .Content -}}<div class="guidelines-intro">{{ . }}</div>{{- end -}}
+  <ul class="guidelines-index">
+    {{- range .Pages.ByWeight -}}
+    <li class="guidelines-index-item">
+      <a href="{{ .RelPermalink }}" class="guidelines-index-link">{{ .Title }}</a>
+      {{- with .Params.description -}}
+        <span class="guidelines-index-desc">— {{ . }}</span>
+      {{- end -}}
+    </li>
+    {{- end -}}
+  </ul>
+</div>
+{{- end -}}
