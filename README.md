@@ -2,6 +2,9 @@
 
 Generate static style guide websites from Vale linting packages.
 
+<img width="1185" height="973" alt="CleanShot 2026-03-26 at 11 08 53" src="https://github.com/user-attachments/assets/c3df108c-acb3-455f-a584-9b177f9c7b73" />
+
+
 ## What it does
 
 rulebound takes a directory of Vale YAML rule definitions, parses them, and produces a static website documenting every rule. The site includes taxonomy pages organized by category, rule type, and severity level, along with responsive design, sidebar navigation, and optional Pagefind client-side search.
