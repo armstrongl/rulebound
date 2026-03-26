@@ -1,0 +1,8 @@
+extends: existence
+message: "Test scope list"
+level: warning
+scope:
+  - list
+  - heading
+tokens:
+  - 'test'

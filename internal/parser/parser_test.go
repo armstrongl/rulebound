@@ -430,3 +430,79 @@ func TestParsePackage_NonExistentDir(t *testing.T) {
 		t.Error("expected error for non-existent directory, got nil")
 	}
 }
+
+// ── Polymorphic YAML field tests ──────────────────────────────────────────────
+
+// TestParseRule_SwapAsList verifies that swap as a YAML sequence of single-key
+// maps (- key: value) is parsed into the same map[string]string as the standard
+// map form.
+func TestParseRule_SwapAsList(t *testing.T) {
+	rule, err := parser.ParseRule(testdata("SwapList.yml"))
+	if err != nil {
+		t.Fatalf("ParseRule returned unexpected error: %v", err)
+	}
+	if rule.Swap == nil {
+		t.Fatal("Swap is nil, expected map with 2 entries")
+	}
+	if len(rule.Swap) != 2 {
+		t.Fatalf("Swap length = %d, want 2", len(rule.Swap))
+	}
+	if rule.Swap["kb"] != "documentation" {
+		t.Errorf("Swap[kb] = %q, want %q", rule.Swap["kb"], "documentation")
+	}
+	if rule.Swap["knowledge base"] != "docs" {
+		t.Errorf("Swap[knowledge base] = %q, want %q", rule.Swap["knowledge base"], "docs")
+	}
+}
+
+// TestParseRule_ScopeAsList verifies that scope as a YAML sequence
+// (- list\n- heading) is joined into a comma-separated string.
+func TestParseRule_ScopeAsList(t *testing.T) {
+	rule, err := parser.ParseRule(testdata("ScopeList.yml"))
+	if err != nil {
+		t.Fatalf("ParseRule returned unexpected error: %v", err)
+	}
+	// Scope should contain both values.
+	if rule.Scope == "" {
+		t.Fatal("Scope is empty, expected list and heading")
+	}
+	for _, want := range []string{"list", "heading"} {
+		if !contains(rule.Scope, want) {
+			t.Errorf("Scope %q does not contain %q", rule.Scope, want)
+		}
+	}
+}
+
+// TestParseRule_SequenceTokens verifies that tokens as a list of {tag, pattern}
+// objects (used by sequence-type rules) are parsed into Tokens strings.
+func TestParseRule_SequenceTokens(t *testing.T) {
+	rule, err := parser.ParseRule(testdata("SequenceTokens.yml"))
+	if err != nil {
+		t.Fatalf("ParseRule returned unexpected error: %v", err)
+	}
+	if rule.Extends != "sequence" {
+		t.Errorf("Extends = %q, want %q", rule.Extends, "sequence")
+	}
+	if len(rule.Tokens) != 2 {
+		t.Fatalf("Tokens length = %d, want 2", len(rule.Tokens))
+	}
+	// Each token should encode the tag and pattern information.
+	for i, tok := range rule.Tokens {
+		if tok == "" {
+			t.Errorf("Tokens[%d] is empty", i)
+		}
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
+}
+
+func containsStr(s, sub string) bool {
+	for i := 0; i <= len(s)-len(sub); i++ {
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
+	}
+	return false
+}

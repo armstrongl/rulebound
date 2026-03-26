@@ -45,20 +45,20 @@ var knownFields = map[string]bool{
 }
 
 // rawRule is the intermediate YAML representation used during parsing.
-// The Action field uses a custom unmarshaller to handle both string and
-// object forms.
+// Several fields use custom unmarshallers to handle Vale's polymorphic YAML
+// syntax (action, swap, scope, tokens).
 type rawRule struct {
 	Extends      string            `yaml:"extends"`
 	Message      string            `yaml:"message"`
 	Level        string            `yaml:"level"`
 	Link         string            `yaml:"link"`
-	Scope        string            `yaml:"scope"`
+	Scope        flexibleScope     `yaml:"scope"`
 	Ignorecase   bool              `yaml:"ignorecase"`
 	Nonword      bool              `yaml:"nonword"`
 	Raw          []string          `yaml:"raw"`
 	Action       *rawAction        `yaml:"action"`
-	Tokens       []string          `yaml:"tokens"`
-	Swap         map[string]string `yaml:"swap"`
+	Tokens       flexibleTokens    `yaml:"tokens"`
+	Swap         flexibleSwap      `yaml:"swap"`
 	First        string            `yaml:"first"`
 	Second       string            `yaml:"second"`
 	Exceptions   []string          `yaml:"exceptions"`
@@ -77,6 +77,110 @@ type rawRule struct {
 	Dictionaries []string          `yaml:"dictionaries"`
 	Custom       bool              `yaml:"custom"`
 	Filters      []string          `yaml:"filters"`
+}
+
+// flexibleSwap handles swap as either a map or a list of single-key maps:
+//
+//	swap: {old: new}           (mapping)
+//	swap:
+//	  - old: new               (sequence of mappings)
+type flexibleSwap map[string]string
+
+func (s *flexibleSwap) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.MappingNode:
+		var m map[string]string
+		if err := value.Decode(&m); err != nil {
+			return err
+		}
+		*s = m
+		return nil
+	case yaml.SequenceNode:
+		result := make(map[string]string)
+		for _, item := range value.Content {
+			if item.Kind != yaml.MappingNode {
+				return fmt.Errorf("swap: expected mapping in sequence, got %v", item.Kind)
+			}
+			var m map[string]string
+			if err := item.Decode(&m); err != nil {
+				return err
+			}
+			for k, v := range m {
+				result[k] = v
+			}
+		}
+		*s = result
+		return nil
+	default:
+		return fmt.Errorf("swap: unexpected YAML node kind %v", value.Kind)
+	}
+}
+
+// flexibleScope handles scope as either a string or a list of strings:
+//
+//	scope: heading             (scalar)
+//	scope:
+//	  - list
+//	  - heading                (sequence)
+type flexibleScope string
+
+func (s *flexibleScope) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.ScalarNode:
+		*s = flexibleScope(value.Value)
+		return nil
+	case yaml.SequenceNode:
+		var items []string
+		if err := value.Decode(&items); err != nil {
+			return err
+		}
+		*s = flexibleScope(strings.Join(items, ", "))
+		return nil
+	default:
+		return fmt.Errorf("scope: unexpected YAML node kind %v", value.Kind)
+	}
+}
+
+// flexibleTokens handles tokens as either a list of strings or a list of
+// objects (used by sequence-type rules with tag/pattern fields):
+//
+//	tokens:
+//	  - 'pattern'              (sequence of scalars)
+//	tokens:
+//	  - tag: "VBN"
+//	    pattern: ".+"          (sequence of mappings)
+type flexibleTokens []string
+
+func (t *flexibleTokens) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.SequenceNode {
+		return fmt.Errorf("tokens: expected sequence, got %v", value.Kind)
+	}
+
+	var result []string
+	for _, item := range value.Content {
+		switch item.Kind {
+		case yaml.ScalarNode:
+			result = append(result, item.Value)
+		case yaml.MappingNode:
+			var obj map[string]string
+			if err := item.Decode(&obj); err != nil {
+				return err
+			}
+			tag := obj["tag"]
+			pattern := obj["pattern"]
+			if tag != "" && pattern != "" {
+				result = append(result, tag+": "+pattern)
+			} else if pattern != "" {
+				result = append(result, pattern)
+			} else if tag != "" {
+				result = append(result, tag)
+			}
+		default:
+			return fmt.Errorf("tokens: unexpected item kind %v", item.Kind)
+		}
+	}
+	*t = result
+	return nil
 }
 
 // rawAction handles the dual form of the action field:
@@ -171,12 +275,12 @@ func ParseRule(filePath string) (*ValeRule, error) {
 		Message:      rr.Message,
 		Level:        rr.Level,
 		Link:         rr.Link,
-		Scope:        rr.Scope,
+		Scope:        string(rr.Scope),
 		Ignorecase:   rr.Ignorecase,
 		Nonword:      rr.Nonword,
 		Raw:          rr.Raw,
-		Tokens:       rr.Tokens,
-		Swap:         rr.Swap,
+		Tokens:       []string(rr.Tokens),
+		Swap:         map[string]string(rr.Swap),
 		First:        rr.First,
 		Second:       rr.Second,
 		Exceptions:   rr.Exceptions,
