@@ -6,6 +6,8 @@ Generate static style guide websites from Vale linting packages.
 
 rulebound takes a directory of Vale YAML rule definitions, parses them, and produces a complete static website documenting every rule. The generated site includes taxonomy pages organized by category, rule type, and severity level, along with responsive design, sidebar navigation, and optional Pagefind client-side search.
 
+Packages can also include editorial guidelines — prose-based Markdown files in a `guidelines/` subdirectory that appear as a separate section alongside the rules.
+
 ## Quick start
 
 ```sh
@@ -65,6 +67,13 @@ categories:
     - Punctuation.Period
   casing:
     - Casing.HeadingTitle
+guidelines:
+  section_title: Editorial Guidelines
+  order:
+    - voice-and-tone
+    - inclusive-language
+  exclude:
+    - draft-notes
 ```
 
 | Field | Default | Description |
@@ -73,15 +82,53 @@ categories:
 | `description` | (empty) | Short description displayed on the site |
 | `baseURL` | `/` | Base URL for the generated Hugo site |
 | `categories` | Group by rule type | Map of category names to lists of rule identifiers. A rule may appear in multiple categories. |
+| `guidelines.section_title` | `Guidelines` | Sidebar heading for the guidelines section |
+| `guidelines.order` | Alphabetical | Explicit page ordering by filename stem |
+| `guidelines.exclude` | (none) | Filename stems to skip (takes precedence over order) |
+| `guidelines.enabled` | `true` | Set to `false` to suppress guideline generation even when files exist |
 
 ## How it works
 
-1. **Parse** -- Reads all Vale YAML rule files in the package directory (supports all 11 extension types).
+1. **Parse** -- Reads all Vale YAML rule files in the package directory (supports all 11 extension types). Also reads editorial guidelines from a `guidelines/` subdirectory.
 2. **Companion docs** -- Reads companion `.md` files alongside each rule for custom documentation content.
-3. **Generate** -- Produces Hugo content files with frontmatter and taxonomy terms for each rule.
+3. **Generate** -- Produces Hugo content files with frontmatter and taxonomy terms for each rule, plus guideline pages with their own layout.
 4. **Scaffold** -- Creates a complete Hugo project in a temporary directory with an embedded theme.
 5. **Build** -- Runs Hugo to compile the static site into the output directory.
 6. **Search index** -- Optionally runs Pagefind to generate a client-side search index.
+
+## Editorial guidelines
+
+Add prose-based writing guidelines alongside your Vale rules by placing Markdown files in a `guidelines/` subdirectory of your package:
+
+```
+my-vale-package/
+├── Avoid.yml
+├── Terms.yml
+├── rulebound.yml
+└── guidelines/
+    ├── voice-and-tone.md
+    └── inclusive-language.md
+```
+
+Each guideline file uses YAML frontmatter:
+
+```markdown
+---
+title: "Voice and Tone"
+description: "How to write in our company voice"
+weight: 10
+---
+
+Write with clarity and confidence. Avoid jargon.
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `title` | Yes | Page title displayed in sidebar and heading |
+| `description` | No | Short summary shown in the guidelines index |
+| `weight` | No | Sort order (lower values appear first, default: 0) |
+
+Guidelines appear in a dedicated sidebar section and have their own index page at `/guidelines/`. Files without a `title` in frontmatter, with malformed YAML, or with non-`.md` extensions are skipped. Subdirectories inside `guidelines/` are ignored.
 
 ## Supported Vale rule types
 
