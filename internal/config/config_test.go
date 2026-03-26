@@ -189,6 +189,98 @@ func TestLoadFileNonExistentReturnsDefaults(t *testing.T) {
 	}
 }
 
+// ── Guidelines config tests ──────────────────────────────────────────────────
+
+func TestLoadGuidelinesConfig(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: My Style Guide
+baseURL: /
+guidelines:
+  section_title: Editorial Guidelines
+  order:
+    - voice-and-tone
+    - inclusive-language
+  exclude:
+    - draft-notes
+  enabled: true
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Guidelines.SectionTitle != "Editorial Guidelines" {
+		t.Errorf("SectionTitle = %q, want %q", cfg.Guidelines.SectionTitle, "Editorial Guidelines")
+	}
+	if len(cfg.Guidelines.Order) != 2 {
+		t.Fatalf("Order length = %d, want 2", len(cfg.Guidelines.Order))
+	}
+	if cfg.Guidelines.Order[0] != "voice-and-tone" {
+		t.Errorf("Order[0] = %q, want %q", cfg.Guidelines.Order[0], "voice-and-tone")
+	}
+	if len(cfg.Guidelines.Exclude) != 1 || cfg.Guidelines.Exclude[0] != "draft-notes" {
+		t.Errorf("Exclude = %v, want [draft-notes]", cfg.Guidelines.Exclude)
+	}
+	if cfg.Guidelines.Enabled == nil || !*cfg.Guidelines.Enabled {
+		t.Error("Enabled should be true")
+	}
+}
+
+func TestLoadGuidelinesConfig_DefaultsWhenAbsent(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: No Guidelines Config
+baseURL: /
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Guidelines.Enabled != nil {
+		t.Errorf("Enabled should be nil (unset), got %v", *cfg.Guidelines.Enabled)
+	}
+	if cfg.Guidelines.SectionTitle != "" {
+		t.Errorf("SectionTitle should be empty, got %q", cfg.Guidelines.SectionTitle)
+	}
+	if len(cfg.Guidelines.Order) != 0 {
+		t.Errorf("Order should be empty, got %v", cfg.Guidelines.Order)
+	}
+}
+
+func TestLoadGuidelinesConfig_ExplicitlyDisabled(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: Disabled Guidelines
+baseURL: /
+guidelines:
+  enabled: false
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Guidelines.Enabled == nil {
+		t.Fatal("Enabled should not be nil")
+	}
+	if *cfg.Guidelines.Enabled {
+		t.Error("Enabled should be false")
+	}
+}
+
+// ── LoadFile tests ──────────────────────────────────────────────────────────
+
 func TestLoadFileMalformedReturnsError(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "bad.yml")

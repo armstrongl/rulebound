@@ -27,6 +27,21 @@ type Config struct {
 	// Categories maps category names to slices of rule identifiers.
 	// A rule may appear in multiple categories; the config layer does not deduplicate.
 	Categories map[string][]string `yaml:"categories"`
+
+	// Guidelines controls how editorial guidelines are processed.
+	Guidelines GuidelinesConfig `yaml:"guidelines"`
+}
+
+// GuidelinesConfig controls how editorial guidelines are processed.
+type GuidelinesConfig struct {
+	// SectionTitle overrides the sidebar heading. Default: "Guidelines".
+	SectionTitle string `yaml:"section_title"`
+	// Order defines explicit page ordering by stem name.
+	Order []string `yaml:"order"`
+	// Exclude skips specific files by stem name (takes precedence over order).
+	Exclude []string `yaml:"exclude"`
+	// Enabled controls auto-detection. Default: true (nil means not set = true).
+	Enabled *bool `yaml:"enabled"`
 }
 
 // Load reads and parses the rulebound.yml file located in packageDir.
