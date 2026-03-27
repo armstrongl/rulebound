@@ -19,6 +19,7 @@
   --color-link-hover:  #033d8b;
   --color-code-bg:     #f1f3f5;
   --color-code-text:   #c7254e;
+  --color-highlight:   #fff3cd;
 
   /* Severity */
   --color-error:       #dc3545;
@@ -219,7 +220,7 @@ details[open] > summary::before { transform: rotate(90deg); }
   border-bottom: 1px solid var(--color-border-light);
 }
 
-/* Suppress Pagefind UI styling in sidebar until Phase 5 adds the real assets */
+/* Prevent layout shift before Pagefind assets load */
 .sidebar-search .search-widget { min-height: 0; }
 
 .sidebar-group {
@@ -855,7 +856,39 @@ em.matched-text {
   margin-top: 0.25rem;
 }
 
-/* ── Search results (Pagefind Component UI) ──────────────── */
+/* ── Pagefind Modular UI overrides (sidebar-compact) ─────── */
+.sidebar-search {
+  --pagefind-ui-scale: 0.55;
+  --pagefind-ui-primary: var(--color-link);
+  --pagefind-ui-text: var(--color-text);
+  --pagefind-ui-background: var(--color-bg);
+  --pagefind-ui-border: var(--color-border);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: var(--radius);
+  --pagefind-ui-tag: var(--color-surface);
+  --pagefind-ui-font: var(--font-sans);
+}
+.sidebar-search .pagefind-modular-input {
+  font-weight: 400;
+}
+.sidebar-search .pagefind-modular-filter-pills-wrapper {
+  overflow-x: hidden;
+  padding: 6px 0;
+}
+.sidebar-search .pagefind-modular-filter-pills {
+  flex-wrap: wrap;
+}
+.sidebar-search .pagefind-modular-filter-pill {
+  font-size: 0.7rem;
+  height: auto;
+  padding: 0.2em 0.55em;
+}
+.sidebar-search .pagefind-modular-list-result {
+  padding: 0;
+  border: none;
+}
+
+/* ── Search results (custom resultTemplate) ──────────────── */
 .search-result-item {
   list-style: none;
   padding: 0.75rem 0;
@@ -887,7 +920,7 @@ em.matched-text {
   line-height: 1.5;
 }
 .search-result-excerpt mark {
-  background: #fff3cd;
+  background: var(--color-highlight);
   color: inherit;
   border-radius: 2px;
   padding: 0 0.1em;
