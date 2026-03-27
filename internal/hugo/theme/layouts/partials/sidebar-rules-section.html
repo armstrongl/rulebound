@@ -1,0 +1,32 @@
+{{- /*
+  sidebar-rules-section.html
+  Renders the auto-generated rules section in the data-driven sidebar.
+  Rules are grouped by category, each in a collapsible depth-2 block
+  nested inside a depth-1 wrapper.
+
+  Context (dict):
+    .rulesSection — navRulesSection object from navigation.json
+    .currentURL   — the current page's .RelPermalink for active highlighting
+*/ -}}
+
+{{- $rulesSection := .rulesSection -}}
+{{- $currentURL := .currentURL -}}
+{{- with $rulesSection.categories -}}
+  <details class="sidebar-section sidebar-depth-1" open>
+    <summary class="sidebar-section-title">{{ $rulesSection.title }}</summary>
+    {{- range $rulesSection.categories -}}
+      <details class="sidebar-section sidebar-depth-2" open>
+        <summary class="sidebar-section-title">{{ .title }}</summary>
+        <ul class="sidebar-list">
+          {{- range .rules -}}
+            <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
+              <a href="{{ .path }}" class="sidebar-link">
+                <span class="sidebar-link-text">{{ .title }}</span>
+              </a>
+            </li>
+          {{- end -}}
+        </ul>
+      </details>
+    {{- end -}}
+  </details>
+{{- end -}}

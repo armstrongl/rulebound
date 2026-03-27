@@ -35,13 +35,13 @@
     {{- /* ── Mode 1: Data-driven sidebar from navigation.json ───── */ -}}
 
     {{- $currentURL := $.RelPermalink -}}
-    {{- $rulesPos := .rules_section.position -}}
+    {{- $rulesPos := int .rules_section.position -}}
     {{- $sections := .sections -}}
     {{- $rulesSection := .rules_section -}}
 
     {{- /* Render rules section at position 0 (before all sections) */ -}}
     {{- if eq $rulesPos 0 -}}
-      {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+      {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
     {{- end -}}
 
     {{- range $i, $section := $sections -}}
@@ -51,14 +51,14 @@
 
       {{- /* Render rules section after this section if position matches (1-indexed) */ -}}
       {{- if eq $rulesPos (add $i 1) -}}
-        {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+        {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
       {{- end -}}
 
     {{- end -}}
 
     {{- /* Render rules section at the end if position is -1 (default/bottom) */ -}}
     {{- if eq $rulesPos -1 -}}
-      {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+      {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
     {{- end -}}
 
   {{- else -}}
@@ -143,28 +143,3 @@
   {{- end -}}
 
 </nav>
-
-{{- /* ── Rules section inline template ────────────────────────────── */ -}}
-{{- define "rules-section" -}}
-  {{- $rulesSection := .rulesSection -}}
-  {{- $currentURL := .currentURL -}}
-  {{- with $rulesSection.categories -}}
-    <details class="sidebar-section sidebar-depth-1" open>
-      <summary class="sidebar-section-title">{{ $rulesSection.title }}</summary>
-      {{- range $rulesSection.categories -}}
-        <details class="sidebar-section sidebar-depth-2" open>
-          <summary class="sidebar-section-title">{{ .title }}</summary>
-          <ul class="sidebar-list">
-            {{- range .rules -}}
-              <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
-                <a href="{{ .path }}" class="sidebar-link">
-                  <span class="sidebar-link-text">{{ .title }}</span>
-                </a>
-              </li>
-            {{- end -}}
-          </ul>
-        </details>
-      {{- end -}}
-    </details>
-  {{- end -}}
-{{- end -}}

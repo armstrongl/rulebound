@@ -885,6 +885,7 @@ em.matched-text {
 .sidebar-section {
   border: none;
   margin: 0;
+  padding: 0;
 }
 .sidebar-section > summary {
   list-style: none;
@@ -892,6 +893,17 @@ em.matched-text {
   user-select: none;
 }
 .sidebar-section > summary::-webkit-details-marker { display: none; }
+/* Override the global details > summary::before for sidebar sections */
+.sidebar-section > summary::before {
+  content: '\25B6';
+  font-size: 0.55em;
+  margin-right: 0.35em;
+  transition: transform 0.15s;
+  vertical-align: middle;
+}
+.sidebar-section[open] > summary::before {
+  transform: rotate(90deg);
+}
 .sidebar-section-title {
   font-size: 0.7rem;
   font-weight: 700;
@@ -910,26 +922,21 @@ em.matched-text {
   color: var(--color-link);
   text-decoration: none;
 }
-.sidebar-section > summary::before {
-  content: '\25B6';
-  display: inline-block;
-  margin-right: 0.35em;
-  font-size: 0.55em;
-  transition: transform 0.15s;
-  vertical-align: middle;
-  margin-left: 1rem;
-}
-.sidebar-section[open] > summary::before {
-  transform: rotate(90deg);
-}
 
-/* Depth indentation for nested sidebar sections */
-.sidebar-depth-1 { padding-left: 0; }
-.sidebar-depth-2 { padding-left: 0.75rem; }
-.sidebar-depth-3 { padding-left: 1.5rem; }
-.sidebar-depth-4 { padding-left: 2.25rem; }
-.sidebar-depth-5 { padding-left: 3rem; }
-.sidebar-depth-6 { padding-left: 3.75rem; }
+/* Depth indentation for nested sidebar sections.
+   Links are indented 0.75rem beyond their section title to
+   align under the title text (past the triangle marker). */
+.sidebar-depth-1 > .sidebar-list .sidebar-link     { padding-left: 1.75rem; }
+.sidebar-depth-2 > summary.sidebar-section-title { padding-left: 1.75rem; }
+.sidebar-depth-2 > .sidebar-list .sidebar-link     { padding-left: 2.5rem; }
+.sidebar-depth-3 > summary.sidebar-section-title { padding-left: 2.5rem; }
+.sidebar-depth-3 > .sidebar-list .sidebar-link     { padding-left: 3.25rem; }
+.sidebar-depth-4 > summary.sidebar-section-title { padding-left: 3.25rem; }
+.sidebar-depth-4 > .sidebar-list .sidebar-link     { padding-left: 4rem; }
+.sidebar-depth-5 > summary.sidebar-section-title { padding-left: 4rem; }
+.sidebar-depth-5 > .sidebar-list .sidebar-link     { padding-left: 4.75rem; }
+.sidebar-depth-6 > summary.sidebar-section-title { padding-left: 4.75rem; }
+.sidebar-depth-6 > .sidebar-list .sidebar-link     { padding-left: 5.5rem; }
 
 /* ── Pagefind Modular UI overrides (sidebar-compact) ─────── */
 .sidebar-search {

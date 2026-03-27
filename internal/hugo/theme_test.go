@@ -261,17 +261,37 @@ func TestSidebarHTML_RulesPositionInterleaving(t *testing.T) {
 	}
 	content := string(data)
 
-	mustContain := []struct {
+	// sidebar.html must reference position and delegate to the rules partial.
+	sidebarMustContain := []struct {
 		substr string
 		reason string
 	}{
 		{`.rules_section.position`, "must reference rules position for interleaving"},
+		{`sidebar-rules-section.html`, "must call the rules section partial"},
+	}
+	for _, tc := range sidebarMustContain {
+		if !strings.Contains(content, tc.substr) {
+			t.Errorf("sidebar.html %s — missing %q", tc.reason, tc.substr)
+		}
+	}
+
+	// sidebar-rules-section.html must render categories and title.
+	rulesData, err := themeFS.ReadFile("theme/layouts/partials/sidebar-rules-section.html")
+	if err != nil {
+		t.Fatalf("reading sidebar-rules-section.html: %v", err)
+	}
+	rulesContent := string(rulesData)
+
+	rulesMustContain := []struct {
+		substr string
+		reason string
+	}{
 		{`$rulesSection.categories`, "must iterate rule categories"},
 		{`$rulesSection.title`, "must render rules section title"},
 	}
-	for _, tc := range mustContain {
-		if !strings.Contains(content, tc.substr) {
-			t.Errorf("sidebar.html %s — missing %q", tc.reason, tc.substr)
+	for _, tc := range rulesMustContain {
+		if !strings.Contains(rulesContent, tc.substr) {
+			t.Errorf("sidebar-rules-section.html %s — missing %q", tc.reason, tc.substr)
 		}
 	}
 }
