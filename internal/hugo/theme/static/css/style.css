@@ -855,6 +855,44 @@ em.matched-text {
   margin-top: 0.25rem;
 }
 
+/* ── Search results (Pagefind Component UI) ──────────────── */
+.search-result-item {
+  list-style: none;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+.search-result-link:hover .search-result-title { text-decoration: underline; }
+.search-result-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-link);
+}
+.search-result-badges {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.search-result-excerpt {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
+.search-result-excerpt mark {
+  background: #fff3cd;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 0.1em;
+}
+
 /* ── Secondary button ─────────────────────────────────────── */
 .btn-secondary {
   background: var(--color-surface);

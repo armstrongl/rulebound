@@ -1,21 +1,66 @@
 {{- /*
   search.html
-  Pagefind search UI placeholder. Actual Pagefind integration is wired in Phase 5
-  after the Hugo build runs `pagefind --site public/`. The divs and script tags
-  here are the standard Pagefind entry points; they are no-ops until the index
-  exists.
+  Pagefind Component UI with weight-boosted search, per-result metadata badges,
+  and faceted filtering by severity, type, and category.
+  Actual Pagefind integration is wired in Phase 5 after the Hugo build runs
+  `pagefind --site public/`. These are no-ops until the index exists.
 */ -}}
 <div class="search-widget">
-  <div id="search"></div>
+  <div id="search">
+    <div id="search-input"></div>
+    <div id="search-filters"></div>
+    <div id="search-summary"></div>
+    <div id="search-results">
+      <pagefind-results>
+        <script type="text/pagefind-template">
+          <li class="search-result-item">
+            <a href="{{ url | safeUrl }}" class="search-result-link">
+              <span class="search-result-title">{{ meta.title }}</span>
+              <span class="search-result-badges">
+                <span class="severity-badge severity-{{ meta.severity }}">{{ meta.severity }}</span>
+                <span class="type-badge">{{ meta.type }}</span>
+              </span>
+            </a>
+            <p class="search-result-excerpt">{{+ excerpt +}}</p>
+          </li>
+        </script>
+      </pagefind-results>
+    </div>
+  </div>
 </div>
 
-{{- /* Pagefind UI assets — served from /pagefind/ after Phase 5 indexing */ -}}
-<link rel="stylesheet" href="/pagefind/pagefind-ui.css">
-<script src="/pagefind/pagefind-ui.js"></script>
-<script>
+{{- /* Pagefind Component UI assets — served from /pagefind/ after Phase 5 indexing */ -}}
+<link rel="stylesheet" href="/pagefind/pagefind-component-ui.css">
+<script src="/pagefind/pagefind-component-ui.js" type="module"></script>
+<script type="module">
   window.addEventListener('DOMContentLoaded', function () {
-    if (typeof PagefindUI !== 'undefined') {
-      new PagefindUI({ element: '#search', showSubResults: true });
+    if (typeof PagefindModularUI !== 'undefined') {
+      var instance = new PagefindModularUI.Instance();
+      instance.add(new PagefindModularUI.Input({
+        containerElement: '#search-input'
+      }));
+      instance.add(new PagefindModularUI.FilterPills({
+        containerElement: '#search-filters',
+        filter: 'severity',
+        ordering: ['error', 'warning', 'suggestion'],
+        selectMultiple: true
+      }));
+      instance.add(new PagefindModularUI.FilterPills({
+        containerElement: '#search-filters',
+        filter: 'type',
+        selectMultiple: true
+      }));
+      instance.add(new PagefindModularUI.FilterPills({
+        containerElement: '#search-filters',
+        filter: 'category',
+        selectMultiple: true
+      }));
+      instance.add(new PagefindModularUI.Summary({
+        containerElement: '#search-summary'
+      }));
+      instance.add(new PagefindModularUI.ResultList({
+        containerElement: '#search-results'
+      }));
     }
   });
 </script>
