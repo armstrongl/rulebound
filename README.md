@@ -1,5 +1,11 @@
 # rulebound
 
+[![CI](https://github.com/armstrongl/rulebound/actions/workflows/ci.yml/badge.svg)](https://github.com/armstrongl/rulebound/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/armstrongl/rulebound)](https://goreportcard.com/report/github.com/armstrongl/rulebound)
+[![Go Reference](https://pkg.go.dev/badge/github.com/armstrongl/rulebound.svg)](https://pkg.go.dev/github.com/armstrongl/rulebound)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/armstrongl/rulebound)](https://github.com/armstrongl/rulebound/releases/latest)
+
 Generate static style guide websites from Vale linting packages.
 
 <img width="1185" height="973" alt="CleanShot 2026-03-26 at 11 08 53" src="https://github.com/user-attachments/assets/c3df108c-acb3-455f-a584-9b177f9c7b73" />
@@ -20,23 +26,52 @@ rulebound build ./my-vale-package --output ./public/
 
 ## Requirements
 
-rulebound requires the following dependencies:
+rulebound requires Hugo to build sites. Pagefind is optional and adds client-side search.
 
-- **Go 1.22+** (to build from source)
-- **Hugo >= 0.128.0** (extended edition recommended)
-- **Pagefind** (optional, for client-side search indexing)
+**Hugo >= 0.128.0** (extended edition recommended):
+
+```sh
+# macOS
+brew install hugo
+
+# Linux (Debian/Ubuntu)
+sudo apt install hugo
+
+# Windows
+winget install Hugo.Hugo.Extended
+```
+
+**Pagefind** (optional -- if absent, sites build without search):
+
+```sh
+npm install -g pagefind
+```
+
+**Go 1.22+** is only needed if you install from source.
 
 ## Installation
 
-Install from source:
+### Homebrew (macOS and Linux)
+
+```sh
+brew install armstrongl/tap/rulebound
+```
+
+### Pre-built binaries
+
+Download a binary for your platform from the [latest release](https://github.com/armstrongl/rulebound/releases/latest), extract it, and add it to your `PATH`.
+
+### Go install
 
 ```sh
 go install github.com/armstrongl/rulebound@latest
 ```
 
-Clone the repository and use the Makefile:
+### Build from source
 
 ```sh
+git clone https://github.com/armstrongl/rulebound.git
+cd rulebound
 make build    # compile to ./rulebound
 make install  # install to $GOPATH/bin
 ```
@@ -220,6 +255,30 @@ Write with clarity and confidence. Avoid jargon.
 | `weight` | No | Sort order (lower values appear first, default: 0) |
 
 Guidelines appear in a dedicated sidebar section and have their own index page at `/guidelines/`. rulebound skips files without a `title` in frontmatter, files with malformed YAML, and files with non-`.md` extensions. rulebound ignores subdirectories inside `guidelines/`.
+
+## Companion documentation
+
+Any Vale rule can have a companion Markdown file with the same base name. When present, rulebound uses the companion file's content as the rule's documentation page body instead of the auto-generated description.
+
+```
+my-vale-package/
+├── Avoid.yml
+├── Avoid.md         <-- companion doc for the Avoid rule
+├── Terms.yml
+└── Terms.md         <-- companion doc for the Terms rule
+```
+
+Companion files use standard Markdown with no required frontmatter:
+
+```markdown
+## Why we avoid these words
+
+These terms are exclusionary or unclear. Use the suggested alternatives instead.
+
+**Example:** Instead of "whitelist," write "allowlist."
+```
+
+Rules without companion files display an auto-generated description based on the rule's YAML fields (message, severity, type, and sample patterns).
 
 ## Supported Vale rule types
 

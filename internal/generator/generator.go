@@ -1,3 +1,5 @@
+// Package generator produces Hugo content files and site configuration
+// from parsed Vale rules, content pages, and guidelines.
 package generator
 
 import (

@@ -1,3 +1,5 @@
+// Package parser reads Vale YAML rule files, companion Markdown docs,
+// content pages, and editorial guidelines from a package directory.
 package parser
 
 import (

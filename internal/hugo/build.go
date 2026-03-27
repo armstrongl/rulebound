@@ -1,3 +1,5 @@
+// Package hugo manages Hugo project scaffolding, theme extraction,
+// site building, and optional Pagefind search indexing.
 package hugo
 
 import (
