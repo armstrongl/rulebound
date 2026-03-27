@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/larah/rulebound/internal/config"
-	"github.com/larah/rulebound/internal/generator"
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/config"
+	"github.com/armstrongl/rulebound/internal/generator"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // ScaffoldResult holds the paths that Scaffold creates.

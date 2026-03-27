@@ -1,6 +1,6 @@
 package main
 
-import "github.com/larah/rulebound/cmd"
+import "github.com/armstrongl/rulebound/cmd"
 
 func main() {
 	cmd.Execute()

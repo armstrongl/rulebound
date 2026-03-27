@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/larah/rulebound/internal/config"
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/config"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // GenerateRule writes a single Hugo content page for the given rule to outDir.

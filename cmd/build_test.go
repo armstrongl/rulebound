@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	hugobuilder "github.com/larah/rulebound/internal/hugo"
+	hugobuilder "github.com/armstrongl/rulebound/internal/hugo"
 	"github.com/spf13/cobra"
 )
 

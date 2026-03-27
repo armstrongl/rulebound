@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/larah/rulebound/internal/config"
+	"github.com/armstrongl/rulebound/internal/config"
 )
 
 // TestLoadValidConfig verifies that a well-formed rulebound.yml is parsed correctly.

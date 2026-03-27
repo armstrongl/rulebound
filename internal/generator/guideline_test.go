@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/larah/rulebound/internal/generator"
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/generator"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 func makeGuideline(name, title string, weight int) *parser.Guideline {

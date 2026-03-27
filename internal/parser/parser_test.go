@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // testdata returns the absolute path to the testdata directory.

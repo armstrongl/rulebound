@@ -1,4 +1,4 @@
-module github.com/larah/rulebound
+module github.com/armstrongl/rulebound
 
 go 1.22
 

@@ -4,12 +4,11 @@ Generate static style guide websites from Vale linting packages.
 
 <img width="1185" height="973" alt="CleanShot 2026-03-26 at 11 08 53" src="https://github.com/user-attachments/assets/c3df108c-acb3-455f-a584-9b177f9c7b73" />
 
-
 ## What it does
 
 rulebound takes a directory of Vale YAML rule definitions, parses them, and produces a static website documenting every rule. The site includes taxonomy pages organized by category, rule type, and severity level, along with responsive design, sidebar navigation, and optional Pagefind client-side search.
 
-Packages can also include editorial guidelines — prose-based Markdown files in a `guidelines/` subdirectory that appear as a separate section alongside the rules.
+Packages can also include hand-authored content alongside the auto-generated rules. A `pages/` directory supports arbitrarily nested Markdown sections for editorial guidance, formatting conventions, resources, and more. A simpler flat `guidelines/` directory is also supported for packages that only need a single section of editorial guidelines.
 
 ## Quick start
 
@@ -32,7 +31,7 @@ rulebound requires the following dependencies:
 Install from source:
 
 ```sh
-go install github.com/larah/rulebound@latest
+go install github.com/armstrongl/rulebound@latest
 ```
 
 Clone the repository and use the Makefile:
@@ -74,6 +73,8 @@ categories:
     - Punctuation.Period
   casing:
     - Casing.HeadingTitle
+pages:
+  enabled: true
 guidelines:
   section_title: Editorial Guidelines
   order:
@@ -91,25 +92,104 @@ The following fields are available:
 | `description` | (empty) | Short description displayed on the site |
 | `baseURL` | `/` | Base URL for the generated Hugo site |
 | `categories` | Group by rule type | Map of category names to lists of rule identifiers. A rule may appear in multiple categories. |
+| `pages.enabled` | `true` | Set to `false` to suppress content page generation even when a `pages/` directory exists |
 | `guidelines.section_title` | `Guidelines` | Sidebar heading for the guidelines section |
-| `guidelines.order` | Alphabetical | Page ordering by filename stem |
-| `guidelines.exclude` | (none) | Filename stems to skip (takes precedence over order) |
+| `guidelines.order` | Alphabetical | Page ordering by filename stem. Items listed in `order` take precedence over frontmatter `weight` values. |
+| `guidelines.exclude` | (none) | Filename stems to skip. Takes precedence over `order`. |
 | `guidelines.enabled` | `true` | Set to `false` to suppress guideline generation even when files exist |
 
 ## How it works
 
 rulebound builds the site in six stages:
 
-1. **Parse** -- Reads all Vale YAML rule files in the package directory (supports all 11 extension types). Also reads editorial guidelines from a `guidelines/` subdirectory.
+1. **Parse** -- Reads all Vale YAML rule files in the package directory (supports all 11 extension types). Also reads content pages from a `pages/` directory and editorial guidelines from a `guidelines/` subdirectory.
 2. **Companion docs** -- Reads companion `.md` files alongside each rule for custom documentation content.
-3. **Generate** -- Produces Hugo content files with frontmatter and taxonomy terms for each rule, plus guideline pages with their own layout.
+3. **Generate** -- Produces Hugo content files with frontmatter and taxonomy terms for each rule, plus content pages and guideline pages with their own layouts.
 4. **Scaffold** -- Creates a Hugo project in a temporary directory with an embedded theme.
 5. **Build** -- Runs Hugo to compile the static site into the output directory.
 6. **Search index** -- If Pagefind is installed, runs it to generate a client-side search index.
 
+## Content pages
+
+To add hand-authored content sections alongside your Vale rules, place Markdown files in a `pages/` directory within your package. The `pages/` directory supports nested subdirectories up to 6 levels deep.
+
+```
+my-vale-package/
+├── Avoid.yml
+├── Terms.yml
+├── rulebound.yml
+└── pages/
+    ├── _meta.yml
+    ├── _index.md
+    ├── formatting/
+    │   ├── _meta.yml
+    │   ├── headings.md
+    │   └── lists.md
+    ├── language-and-grammar/
+    │   ├── _index.md
+    │   ├── active-voice.md
+    │   └── pronouns.md
+    └── resources/
+        ├── glossary.md
+        └── templates/
+            └── email-template.md
+```
+
+### Page files
+
+Each `.md` file uses YAML frontmatter:
+
+```markdown
+---
+title: "Headings"
+description: "How to write effective headings"
+---
+
+Use sentence case for all headings.
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `title` | No | Page title. If omitted, rulebound derives it from the filename (for example, `active-voice.md` becomes "Active Voice"). |
+| `description` | No | Short summary for the page |
+
+### Section metadata (`_meta.yml`)
+
+Place a `_meta.yml` file in any directory to control sidebar navigation:
+
+```yaml
+title: "Language and Grammar"
+order:
+  - active-voice
+  - pronouns
+  - rules
+collapsed: false
+hidden:
+  - draft-notes
+rules_title: "Linting Rules"
+```
+
+| Field | Default | Description |
+| --- | --- | --- |
+| `title` | Derived from directory name | Display name for the section in the sidebar |
+| `order` | Alphabetical | List of filename stems defining sidebar sequence. Unlisted pages sort alphabetically after listed ones. |
+| `collapsed` | `false` | Whether the section starts collapsed in the sidebar |
+| `hidden` | (none) | Filename stems to exclude from sidebar navigation and search indexing |
+| `rules_title` | `Rules` | Display name for the auto-generated rules section (top level only) |
+
+The `order` list supports a reserved `rules` keyword at the top level. Including `rules` in the list controls where the auto-generated Vale rules section appears relative to your content sections.
+
+### Hub pages (`_index.md`)
+
+Place an `_index.md` file in any directory to add an introductory hub page for that section. Hub pages appear at the section root URL (for example, `/pages/language-and-grammar/`).
+
+### Nesting
+
+Directories nest up to 6 levels deep. Directories deeper than 6 levels are still parsed but flattened to level 6 with a warning. If a `pages/rules/` directory exists and `rules` also appears in the `_meta.yml` `order` list, the directory takes precedence and rulebound emits a collision warning.
+
 ## Editorial guidelines
 
-To add prose-based writing guidelines alongside your Vale rules, place Markdown files in a `guidelines/` subdirectory of your package:
+For packages that only need a flat set of editorial guidelines, rulebound also supports a simpler `guidelines/` subdirectory. If your package has a `pages/` directory, consider migrating guidelines into `pages/guidelines/` instead.
 
 ```
 my-vale-package/
@@ -132,8 +212,6 @@ weight: 10
 
 Write with clarity and confidence. Avoid jargon.
 ```
-
-The following frontmatter fields are available:
 
 | Field | Required | Description |
 | --- | --- | --- |
@@ -179,9 +257,9 @@ The repository is organized as follows:
 cmd/           CLI commands (root, build)
 internal/
   config/      rulebound.yml parsing
-  parser/      Vale YAML rule parser
-  generator/   Hugo content generation
-  hugo/        Hugo scaffolding, build, theme
+  parser/      Vale rules, guidelines, pages, and companion doc parser
+  generator/   Hugo content and navigation generation
+  hugo/        Hugo scaffolding, build, embedded theme
 ```
 
 ## Development

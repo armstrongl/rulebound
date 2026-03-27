@@ -9,7 +9,7 @@ import (
 )
 
 // Version is the current rulebound version, replaced at build time via
-// -ldflags "-X github.com/larah/rulebound/cmd.Version=<ver>".
+// -ldflags "-X github.com/armstrongl/rulebound/cmd.Version=<ver>".
 var Version = "dev"
 
 // Verbose holds the global --verbose flag value. All sub-commands read it.

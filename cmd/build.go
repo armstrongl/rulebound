@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/larah/rulebound/internal/config"
-	"github.com/larah/rulebound/internal/generator"
-	hugobuilder "github.com/larah/rulebound/internal/hugo"
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/config"
+	"github.com/armstrongl/rulebound/internal/generator"
+	hugobuilder "github.com/armstrongl/rulebound/internal/hugo"
+	"github.com/armstrongl/rulebound/internal/parser"
 	"github.com/spf13/cobra"
 )
 

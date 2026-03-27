@@ -10,7 +10,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // DisplayName converts a CamelCase rule name into a human-readable display

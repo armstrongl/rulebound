@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // ── JSON serialization types ─────────────────────────────────────────────────

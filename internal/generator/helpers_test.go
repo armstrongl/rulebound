@@ -3,7 +3,7 @@ package generator
 import (
 	"testing"
 
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // ── ruleVerb ──────────────────────────────────────────────────────────────────

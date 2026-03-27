@@ -8,7 +8,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // pageFrontmatter is the YAML frontmatter for a content page.

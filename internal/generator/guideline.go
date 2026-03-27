@@ -8,8 +8,8 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/larah/rulebound/internal/config"
-	"github.com/larah/rulebound/internal/parser"
+	"github.com/armstrongl/rulebound/internal/config"
+	"github.com/armstrongl/rulebound/internal/parser"
 )
 
 // guidelineFrontmatter is the Hugo frontmatter for a guideline page.
