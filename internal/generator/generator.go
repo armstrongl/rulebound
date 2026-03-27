@@ -197,10 +197,10 @@ func buildCategoriesMap(rules []*parser.ValeRule) map[string][]string {
 // generateHugoTOML writes hugo.toml from config values.
 func generateHugoTOML(cfg *config.Config, outputDir string) error {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("baseURL = %q\n", cfg.BaseURL))
-	sb.WriteString(fmt.Sprintf("title = %q\n", cfg.Title))
+	fmt.Fprintf(&sb, "baseURL = %q\n", cfg.BaseURL)
+	fmt.Fprintf(&sb, "title = %q\n", cfg.Title)
 	if cfg.Description != "" {
-		sb.WriteString(fmt.Sprintf("description = %q\n", cfg.Description))
+		fmt.Fprintf(&sb, "description = %q\n", cfg.Description)
 	}
 	sb.WriteString("\n[taxonomies]\n")
 	sb.WriteString("  category = \"categories\"\n")

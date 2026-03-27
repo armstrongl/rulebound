@@ -67,7 +67,7 @@ func TestLoadMissingConfigUsesDefaults(t *testing.T) {
 	if cfg.BaseURL != "/" {
 		t.Errorf("BaseURL = %q, want %q", cfg.BaseURL, "/")
 	}
-	if cfg.Categories != nil && len(cfg.Categories) != 0 {
+	if len(cfg.Categories) != 0 {
 		t.Errorf("Categories = %v, want nil/empty map", cfg.Categories)
 	}
 }
