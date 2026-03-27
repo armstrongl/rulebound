@@ -1,12 +1,44 @@
 # Compiled binary
 /rulebound
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
 # Generated site output
 /public/
 /demo-site/
 
-# Go test cache artifacts
+# GoReleaser output
+/dist/
+
+# Go test cache and coverage
 *.test
+coverage.*
+*.coverprofile
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Claude Code and AI tool artifacts
+.claude/
+.remember/
+
+# Internal development docs (brainstorms, ideation, plans, solutions)
+docs/brainstorms/
+docs/ideation/
+docs/plans/
+docs/solutions/
+
+# Environment
+.env
+.env.local
 
 # macOS
 .DS_Store
+
+# Windows
+Thumbs.db
