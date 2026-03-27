@@ -116,7 +116,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Scaffold Hugo project ─────────────────────────────────────────────
-	scaffold, err := hugobuilder.Scaffold(result, cfg)
+	scaffold, err := hugobuilder.Scaffold(result, cfg, packagePath)
 	if err != nil {
 		if scaffold != nil && scaffold.TempDir != "" {
 			os.RemoveAll(scaffold.TempDir)
