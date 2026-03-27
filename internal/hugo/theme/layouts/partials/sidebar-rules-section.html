@@ -17,8 +17,8 @@
       <h3 class="sidebar-group-title">{{ .title }}</h3>
       <ul class="sidebar-list">
         {{- range .rules -}}
-          <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
-            <a href="{{ .path }}" class="sidebar-link">
+          <li class="sidebar-item{{ if eq ((strings.TrimPrefix "/" .path) | relURL) $currentURL }} active{{ end }}">
+            <a href="{{ (strings.TrimPrefix "/" .path) | relURL }}" class="sidebar-link">
               {{- with .level -}}
                 <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
               {{- end -}}

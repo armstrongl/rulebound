@@ -29,7 +29,7 @@
           <ul class="stats-list">
             {{- range $level, $count := . -}}
               <li>
-                <a href="{{ (printf "/severities/%s/" ($level | urlize)) | relURL }}" class="stats-link">
+                <a href="{{ (printf "severities/%s/" ($level | urlize)) | relURL }}" class="stats-link">
                   {{- partial "severity-badge.html" $level -}}
                   <span class="stats-count">{{ $count }}</span>
                 </a>
@@ -45,7 +45,7 @@
           <ul class="stats-list">
             {{- range $type, $count := . -}}
               <li>
-                <a href="{{ (printf "/ruletypes/%s/" ($type | urlize)) | relURL }}" class="stats-link">
+                <a href="{{ (printf "ruletypes/%s/" ($type | urlize)) | relURL }}" class="stats-link">
                   <span class="type-badge">{{ $type }}</span>
                   <span class="stats-count">{{ $count }}</span>
                 </a>
@@ -61,7 +61,7 @@
           <ul class="stats-list">
             {{- range $cat, $count := . -}}
               <li>
-                <a href="{{ (printf "/categories/%s/" ($cat | urlize)) | relURL }}" class="stats-link">
+                <a href="{{ (printf "categories/%s/" ($cat | urlize)) | relURL }}" class="stats-link">
                   <span class="category-tag">{{ $cat }}</span>
                   <span class="stats-count">{{ $count }}</span>
                 </a>
@@ -93,7 +93,7 @@
             <tr>
               <td><a href="{{ .RelPermalink }}" class="rule-link">{{ .Title }}</a></td>
               <td>
-                <a href="{{ (printf "/ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
+                <a href="{{ (printf "ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
               </td>
               <td>{{ partial "severity-badge.html" ($rp.level | default "suggestion") }}</td>
               <td class="rule-description">

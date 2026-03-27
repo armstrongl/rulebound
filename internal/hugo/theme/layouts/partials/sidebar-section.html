@@ -20,7 +20,7 @@
 <details class="sidebar-section sidebar-depth-{{ $depth }}"{{ if not $section.collapsed }} open{{ end }}>
   <summary class="sidebar-section-title">
     {{- with $section.path -}}
-      <a href="{{ . }}">{{ $section.title }}</a>
+      <a href="{{ (strings.TrimPrefix "/" .) | relURL }}">{{ $section.title }}</a>
     {{- else -}}
       {{ $section.title }}
     {{- end -}}
@@ -29,8 +29,8 @@
   {{- if $section.pages -}}
     <ul class="sidebar-list">
       {{- range $section.pages -}}
-        <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
-          <a href="{{ .path }}" class="sidebar-link">
+        <li class="sidebar-item{{ if eq ((strings.TrimPrefix "/" .path) | relURL) $currentURL }} active{{ end }}">
+          <a href="{{ (strings.TrimPrefix "/" .path) | relURL }}" class="sidebar-link">
             <span class="sidebar-link-text">{{ .title }}</span>
           </a>
         </li>

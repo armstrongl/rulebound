@@ -17,14 +17,14 @@
     <div class="rule-meta">
       <span class="rule-meta-item">
         <span class="meta-label">Type</span>
-        <a href="{{ (printf "/ruletypes/%s/" ($p.extends | urlize)) | relURL }}" class="meta-value type-badge" data-pagefind-filter="type">{{ $p.extends }}</a>
+        <a href="{{ (printf "ruletypes/%s/" ($p.extends | urlize)) | relURL }}" class="meta-value type-badge" data-pagefind-filter="type">{{ $p.extends }}</a>
       </span>
 
       {{- with $p.categories -}}
         <span class="rule-meta-item">
           <span class="meta-label">{{ if gt (len .) 1 }}Categories{{ else }}Category{{ end }}</span>
           {{- range . -}}
-            <a href="{{ (printf "/categories/%s/" (. | urlize)) | relURL }}" class="meta-value category-tag" data-pagefind-filter="category">{{ . }}</a>
+            <a href="{{ (printf "categories/%s/" (. | urlize)) | relURL }}" class="meta-value category-tag" data-pagefind-filter="category">{{ . }}</a>
           {{- end -}}
         </span>
       {{- end -}}

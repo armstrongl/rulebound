@@ -12,7 +12,7 @@
       <span class="hamburger-bar"></span>
       <span class="hamburger-bar"></span>
     </button>
-    <a href="{{ "/" | relURL }}" class="mobile-brand">{{ site.Title }}</a>
+    <a href="{{ "" | relURL }}" class="mobile-brand">{{ site.Title }}</a>
   </header>
 
   {{- /* Overlay backdrop for mobile sidebar */ -}}
@@ -30,7 +30,7 @@
       {{- if not .IsHome -}}
         <nav class="breadcrumb" aria-label="Breadcrumb">
           <ol>
-            <li><a href="{{ "/" | relURL }}">Home</a></li>
+            <li><a href="{{ "" | relURL }}">Home</a></li>
             {{- range .Ancestors.Reverse -}}
               <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
             {{- end -}}

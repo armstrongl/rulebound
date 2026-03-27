@@ -18,8 +18,8 @@
      pagefind-modular-ui.js is a regular script (not an ES module) that sets
      window.PagefindModularUI. Do NOT add type="module" — it would scope
      the global away and break the typeof guard. */ -}}
-<link rel="stylesheet" href="/pagefind/pagefind-modular-ui.css">
-<script src="/pagefind/pagefind-modular-ui.js"></script>
+<link rel="stylesheet" href="{{ "pagefind/pagefind-modular-ui.css" | relURL }}">
+<script src="{{ "pagefind/pagefind-modular-ui.js" | relURL }}"></script>
 <script>
   window.addEventListener('DOMContentLoaded', function () {
     if (typeof PagefindModularUI === 'undefined') return;

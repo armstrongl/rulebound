@@ -38,10 +38,10 @@
     </div>
 
     <div class="hero-actions">
-      <a href="{{ "/rules/" | relURL }}" class="btn btn-primary">Browse All Rules</a>
+      <a href="{{ "rules/" | relURL }}" class="btn btn-primary">Browse All Rules</a>
       {{- with $p.guidelines_count -}}
         {{- if gt . 0 -}}
-          <a href="{{ "/guidelines/" | relURL }}" class="btn btn-secondary">Browse Guidelines</a>
+          <a href="{{ "guidelines/" | relURL }}" class="btn btn-secondary">Browse Guidelines</a>
         {{- end -}}
       {{- end -}}
     </div>
@@ -59,7 +59,7 @@
           {{- range $level, $count := . -}}
             <li class="breakdown-item">
               <div class="breakdown-header">
-                <a href="{{ (printf "/severities/%s/" ($level | urlize)) | relURL }}">
+                <a href="{{ (printf "severities/%s/" ($level | urlize)) | relURL }}">
                   {{- partial "severity-badge.html" $level -}}
                 </a>
                 <span class="breakdown-count">{{ $count }}</span>
@@ -83,7 +83,7 @@
           {{- range $type, $count := . -}}
             <li class="breakdown-item">
               <div class="breakdown-header">
-                <a href="{{ (printf "/ruletypes/%s/" ($type | urlize)) | relURL }}" class="type-badge">{{ $type }}</a>
+                <a href="{{ (printf "ruletypes/%s/" ($type | urlize)) | relURL }}" class="type-badge">{{ $type }}</a>
                 <span class="breakdown-count">{{ $count }}</span>
               </div>
               <div class="breakdown-bar-track">
@@ -102,7 +102,7 @@
         <h2>Quick Links by Category</h2>
         <div class="category-grid">
           {{- range $cat, $count := . -}}
-            <a href="{{ (printf "/categories/%s/" ($cat | urlize)) | relURL }}" class="category-card">
+            <a href="{{ (printf "categories/%s/" ($cat | urlize)) | relURL }}" class="category-card">
               <span class="category-card-name">{{ $cat }}</span>
               <span class="category-card-count">{{ $count }} rule{{ if gt $count 1 }}s{{ end }}</span>
             </a>
@@ -132,7 +132,7 @@
             <tr>
               <td><a href="{{ .RelPermalink }}" class="rule-link">{{ .Title }}</a></td>
               <td>
-                <a href="{{ (printf "/ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
+                <a href="{{ (printf "ruletypes/%s/" ($rp.extends | urlize)) | relURL }}" class="type-badge">{{ $rp.extends }}</a>
               </td>
               <td>{{ partial "severity-badge.html" ($rp.level | default "suggestion") }}</td>
             </tr>
