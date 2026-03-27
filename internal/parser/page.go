@@ -250,6 +250,15 @@ func parsePagesDir(dir string, name string, pathPrefix string, depth int) (*Sect
 			File:    "_meta.yml",
 			Message: "rules/ directory collision: 'rules' in order list and pages/rules/ directory both exist; directory takes precedence",
 		})
+		// Remove the reserved "rules" keyword from the order list so navigation
+		// generation doesn't treat it as the auto-generated rules section position.
+		filtered := make([]string, 0, len(tree.Meta.Order))
+		for _, item := range tree.Meta.Order {
+			if item != "rules" {
+				filtered = append(filtered, item)
+			}
+		}
+		tree.Meta.Order = filtered
 	}
 
 	// ── Order pages ───────────────────────────────────────────────────────
@@ -271,8 +280,8 @@ func parsePagesDir(dir string, name string, pathPrefix string, depth int) (*Sect
 				File:    subName,
 				Message: fmt.Sprintf("nesting depth exceeds %d levels; flattening to level %d", maxSectionDepth, maxSectionDepth),
 			})
-			// Flatten: still parse, but attach to current tree at capped depth.
-			child, childWarnings, err := parsePagesDir(filepath.Join(dir, subName), subName, subPath, depth+1)
+			// Flatten: still parse, but keep logical depth capped at maxSectionDepth.
+			child, childWarnings, err := parsePagesDir(filepath.Join(dir, subName), subName, subPath, maxSectionDepth)
 			if err != nil {
 				return nil, nil, err
 			}

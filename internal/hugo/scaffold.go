@@ -98,6 +98,9 @@ func Scaffold(parseResult *parser.ParseResult, cfg *config.Config, packageDir st
 // destDir/static/, preserving directory structure. If the source directory
 // does not exist, it returns nil (no-op).
 func copyPackageStatic(packageDir, destDir string) error {
+	if packageDir == "" {
+		return nil
+	}
 	srcStatic := filepath.Join(packageDir, "static")
 	if _, err := os.Stat(srcStatic); os.IsNotExist(err) {
 		return nil

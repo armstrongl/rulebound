@@ -101,6 +101,11 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// ── Honor pages.enabled config ───────────────────────────────────────
+	if cfg.Pages.Enabled != nil && !*cfg.Pages.Enabled {
+		result.Pages = nil
+	}
+
 	// ── Deprecation warning: guidelines config with pages/ ────────────────
 	if result.Pages != nil && !generator.SectionTreeIsEmpty(result.Pages) {
 		if guidelinesConfigHasNonDefaults(cfg.Guidelines) {
