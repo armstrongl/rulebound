@@ -77,6 +77,22 @@ func SectionTreeIsEmpty(tree *parser.SectionTree) bool {
 	return true
 }
 
+// CountPages returns the total number of content pages in a SectionTree,
+// counting pages at every level plus index pages. Returns 0 for nil trees.
+func CountPages(tree *parser.SectionTree) int {
+	if tree == nil {
+		return 0
+	}
+	count := len(tree.Pages)
+	if tree.IndexPage != nil {
+		count++
+	}
+	for _, child := range tree.Children {
+		count += CountPages(child)
+	}
+	return count
+}
+
 // GenerateNavigationJSON builds and writes data/navigation.json from the
 // SectionTree and rules. When pages is nil or empty, no file is written.
 func GenerateNavigationJSON(pages *parser.SectionTree, rules []*parser.ValeRule, categories map[string][]string, dataDir string) error {
