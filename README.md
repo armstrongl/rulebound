@@ -24,6 +24,15 @@ Generate a style guide site from a Vale package:
 rulebound build ./my-vale-package --output ./public/
 ```
 
+Try it with the included example package:
+
+```sh
+git clone https://github.com/armstrongl/rulebound.git
+cd rulebound
+go run . build examples/starter-package --output /tmp/my-style-guide
+open /tmp/my-style-guide/index.html
+```
+
 ## Requirements
 
 rulebound requires Hugo to build sites. Pagefind is optional and adds client-side search.

@@ -1,0 +1,18 @@
+extends: existence
+message: "'%s' looks like passive voice. Use active voice instead."
+level: warning
+tokens:
+  - was created
+  - was deleted
+  - was found
+  - was made
+  - was removed
+  - was set
+  - was updated
+  - were changed
+  - were found
+  - were removed
+  - is expected
+  - is required
+  - are expected
+  - are required

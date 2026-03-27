@@ -1,0 +1,5 @@
+title: TechDocs Style Guide
+description: Documentation standards for technical writing teams
+baseURL: /
+pages:
+  enabled: true

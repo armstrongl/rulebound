@@ -1,0 +1,17 @@
+extends: existence
+message: "'%s' is wordy. Consider a more concise alternative."
+level: suggestion
+ignorecase: true
+tokens:
+  - a number of
+  - as a matter of fact
+  - at the present time
+  - by means of
+  - for the purpose of
+  - has the ability to
+  - in the process of
+  - it is important to note that
+  - on a regular basis
+  - take into consideration
+  - with regard to
+  - with respect to
