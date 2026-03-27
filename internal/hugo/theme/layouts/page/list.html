@@ -1,0 +1,19 @@
+{{- define "main" -}}
+<div class="page-content" data-pagefind-body>
+  <h1 data-pagefind-meta="title">{{ .Title }}</h1>
+  {{- with .Content -}}
+    <div class="page-body">
+      {{ . }}
+    </div>
+  {{- end -}}
+  {{- with .Pages -}}
+    <nav class="page-children">
+      <ul class="page-children-list">
+        {{- range . -}}
+          <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+        {{- end -}}
+      </ul>
+    </nav>
+  {{- end -}}
+</div>
+{{- end -}}

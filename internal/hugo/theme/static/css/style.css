@@ -850,6 +850,31 @@ em.matched-text {
   font-size: 0.875rem;
 }
 
+/* ── Page content (generic pages) ────────────────────────── */
+.page-content { max-width: var(--content-max); }
+
+.page-header { margin-bottom: 1.5rem; }
+
+.page-body { line-height: 1.7; }
+
+.page-children { margin-top: 1.5rem; }
+
+.page-children-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.page-children-list li { margin: 0; }
+
+.page-children-list a {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
 /* ── Guidelines sidebar section ───────────────────────────── */
 .sidebar-guidelines {
   border-top: 1px solid var(--color-border-light);
