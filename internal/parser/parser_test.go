@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -432,6 +433,43 @@ func TestParsePackage_IncludesGuidelines(t *testing.T) {
 	// testdata/Microsoft/guidelines/ has 3 valid guidelines
 	if len(result.Guidelines) != 3 {
 		t.Errorf("expected 3 guidelines, got %d", len(result.Guidelines))
+	}
+}
+
+func TestParsePackage_IncludesPages(t *testing.T) {
+	dir := t.TempDir()
+	pagesDir := filepath.Join(dir, "pages")
+	if err := os.MkdirAll(pagesDir, 0o755); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(pagesDir, "test-page.md"),
+		[]byte("---\ntitle: Test Page\n---\nPage body."), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	result, err := parser.ParsePackage(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Pages == nil {
+		t.Fatal("expected non-nil Pages when pages/ directory exists")
+	}
+	if len(result.Pages.Pages) != 1 {
+		t.Fatalf("expected 1 page, got %d", len(result.Pages.Pages))
+	}
+	if result.Pages.Pages[0].Title != "Test Page" {
+		t.Errorf("page title = %q, want %q", result.Pages.Pages[0].Title, "Test Page")
+	}
+}
+
+func TestParsePackage_NoPagesDir(t *testing.T) {
+	result, err := parser.ParsePackage(t.TempDir())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Pages != nil {
+		t.Errorf("expected nil Pages when pages/ absent, got %+v", result.Pages)
 	}
 }
 

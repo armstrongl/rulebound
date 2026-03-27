@@ -22,7 +22,7 @@ func TestScaffold_CreatesExpectedStructure(t *testing.T) {
 		BaseURL: "https://example.com/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestScaffold_HugoTomlContainsTheme(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestScaffold_ThemeExtracted(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{}, cfg)
+	result, err := Scaffold(&parser.ParseResult{}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestScaffold_ContentFilesGenerated(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestScaffold_ReturnsTempDir(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{}, cfg)
+	result, err := Scaffold(&parser.ParseResult{}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestScaffold_DataDirContainsSiteJSON(t *testing.T) {
 		BaseURL: "/",
 	}
 
-	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg)
+	result, err := Scaffold(&parser.ParseResult{Rules: rules}, cfg, "")
 	if err != nil {
 		t.Fatalf("Scaffold: %v", err)
 	}
@@ -198,6 +198,112 @@ func TestScaffold_DataDirContainsSiteJSON(t *testing.T) {
 	}
 	if info.Size() == 0 {
 		t.Error("data/site.json should not be empty")
+	}
+}
+
+// ── Scaffold: static asset copying ────────────────────────────────────────────
+
+func TestScaffold_NoStaticDir_NoError(t *testing.T) {
+	pkgDir := t.TempDir() // no static/ subdirectory
+	cfg := &config.Config{
+		Title:   "Test Style Guide",
+		BaseURL: "/",
+	}
+
+	result, err := Scaffold(&parser.ParseResult{}, cfg, pkgDir)
+	if err != nil {
+		t.Fatalf("Scaffold: %v", err)
+	}
+	defer os.RemoveAll(result.TempDir)
+
+	// static/ should not exist in the Hugo project (no source to copy)
+	staticDir := filepath.Join(result.TempDir, "static")
+	if _, statErr := os.Stat(staticDir); statErr == nil {
+		// It might exist from the theme — that's fine; the point is no error.
+		t.Log("static/ exists (likely from theme), which is acceptable")
+	}
+}
+
+func TestScaffold_StaticDir_FilesCopied(t *testing.T) {
+	pkgDir := t.TempDir()
+	staticSrc := filepath.Join(pkgDir, "static")
+	if err := os.MkdirAll(staticSrc, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(staticSrc, "logo.png"), []byte("fake-png"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(staticSrc, "style.css"), []byte("body{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.Config{
+		Title:   "Test Style Guide",
+		BaseURL: "/",
+	}
+
+	result, err := Scaffold(&parser.ParseResult{}, cfg, pkgDir)
+	if err != nil {
+		t.Fatalf("Scaffold: %v", err)
+	}
+	defer os.RemoveAll(result.TempDir)
+
+	for _, name := range []string{"logo.png", "style.css"} {
+		dest := filepath.Join(result.TempDir, "static", name)
+		data, readErr := os.ReadFile(dest)
+		if readErr != nil {
+			t.Errorf("expected %s in static/: %v", name, readErr)
+			continue
+		}
+		if len(data) == 0 {
+			t.Errorf("static/%s should not be empty", name)
+		}
+	}
+}
+
+func TestScaffold_StaticDir_NestedSubdirs(t *testing.T) {
+	pkgDir := t.TempDir()
+	nestedDir := filepath.Join(pkgDir, "static", "images", "icons")
+	if err := os.MkdirAll(nestedDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nestedDir, "favicon.ico"), []byte("icon-data"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Also a file at the top level
+	if err := os.WriteFile(filepath.Join(pkgDir, "static", "robots.txt"), []byte("User-agent: *"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.Config{
+		Title:   "Test Style Guide",
+		BaseURL: "/",
+	}
+
+	result, err := Scaffold(&parser.ParseResult{}, cfg, pkgDir)
+	if err != nil {
+		t.Fatalf("Scaffold: %v", err)
+	}
+	defer os.RemoveAll(result.TempDir)
+
+	// Check nested file
+	faviconDest := filepath.Join(result.TempDir, "static", "images", "icons", "favicon.ico")
+	data, readErr := os.ReadFile(faviconDest)
+	if readErr != nil {
+		t.Fatalf("expected favicon.ico at %s: %v", faviconDest, readErr)
+	}
+	if string(data) != "icon-data" {
+		t.Errorf("favicon.ico content = %q, want %q", string(data), "icon-data")
+	}
+
+	// Check top-level file
+	robotsDest := filepath.Join(result.TempDir, "static", "robots.txt")
+	data, readErr = os.ReadFile(robotsDest)
+	if readErr != nil {
+		t.Fatalf("expected robots.txt at %s: %v", robotsDest, readErr)
+	}
+	if string(data) != "User-agent: *" {
+		t.Errorf("robots.txt content = %q, want %q", string(data), "User-agent: *")
 	}
 }
 

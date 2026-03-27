@@ -292,3 +292,112 @@ func TestLoadFileMalformedReturnsError(t *testing.T) {
 		t.Fatal("LoadFile() expected error for malformed YAML")
 	}
 }
+
+// ── Pages config tests ──────────────────────────────────────────────────────
+
+func TestLoadPagesConfig(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: My Style Guide
+baseURL: /
+pages:
+  enabled: true
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Pages.Enabled == nil || !*cfg.Pages.Enabled {
+		t.Error("Pages.Enabled should be true")
+	}
+}
+
+func TestLoadPagesConfig_DefaultsWhenAbsent(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: No Pages Config
+baseURL: /
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Pages.Enabled != nil {
+		t.Errorf("Pages.Enabled should be nil (unset), got %v", *cfg.Pages.Enabled)
+	}
+}
+
+func TestLoadPagesConfig_ExplicitlyDisabled(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: Disabled Pages
+baseURL: /
+pages:
+  enabled: false
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Pages.Enabled == nil {
+		t.Fatal("Pages.Enabled should not be nil")
+	}
+	if *cfg.Pages.Enabled {
+		t.Error("Pages.Enabled should be false")
+	}
+}
+
+func TestLoadExistingFieldsStillWork(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: Full Config
+description: Test all fields
+baseURL: https://example.com/
+categories:
+  style:
+    - Style.Avoid
+pages:
+  enabled: true
+guidelines:
+  section_title: Editorial
+  enabled: true
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Title != "Full Config" {
+		t.Errorf("Title = %q, want %q", cfg.Title, "Full Config")
+	}
+	if cfg.Description != "Test all fields" {
+		t.Errorf("Description = %q, want %q", cfg.Description, "Test all fields")
+	}
+	if cfg.BaseURL != "https://example.com/" {
+		t.Errorf("BaseURL = %q, want %q", cfg.BaseURL, "https://example.com/")
+	}
+	if len(cfg.Categories["style"]) != 1 {
+		t.Errorf("Categories[style] length = %d, want 1", len(cfg.Categories["style"]))
+	}
+	if cfg.Pages.Enabled == nil || !*cfg.Pages.Enabled {
+		t.Error("Pages.Enabled should be true")
+	}
+	if cfg.Guidelines.SectionTitle != "Editorial" {
+		t.Errorf("Guidelines.SectionTitle = %q, want %q", cfg.Guidelines.SectionTitle, "Editorial")
+	}
+}

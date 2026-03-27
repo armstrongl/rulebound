@@ -73,36 +73,59 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		return err
 	}
 
+	// ── Pages (supersedes guidelines when present) ──────────────────────
+	contentDir := filepath.Join(outputDir, "content")
+	hasPages := result.Pages != nil && !SectionTreeIsEmpty(result.Pages)
+
+	if hasPages {
+		// Generate page content tree.
+		if err := GeneratePageTree(result.Pages, contentDir); err != nil {
+			return err
+		}
+
+		// Build categories lookup map from rules for navigation.
+		categoriesMap := buildCategoriesMap(rules)
+
+		// Generate navigation.json.
+		if err := GenerateNavigationJSON(result.Pages, rules, categoriesMap, dataDir); err != nil {
+			return err
+		}
+	}
+
 	// ── Guidelines ───────────────────────────────────────────────────────
-	// Check if guidelines are enabled (default: true when Enabled is nil).
-	guidelinesEnabled := cfg.Guidelines.Enabled == nil || *cfg.Guidelines.Enabled
-	guidelines := result.Guidelines
+	// Guidelines only run when pages are NOT present (pages supersede guidelines).
 	guidelinesCount := 0
 
-	if guidelinesEnabled && len(guidelines) > 0 {
-		// Apply ordering and exclusion from config.
-		var guidelineWarnings []parser.ParseWarning
-		guidelines, guidelineWarnings = applyGuidelinesConfig(guidelines, cfg.Guidelines)
-		// Log config validation warnings (for example, unmatched order stems) to stderr.
-		for _, w := range guidelineWarnings {
-			fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
-		}
-		guidelinesCount = len(guidelines)
+	if !hasPages {
+		// Check if guidelines are enabled (default: true when Enabled is nil).
+		guidelinesEnabled := cfg.Guidelines.Enabled == nil || *cfg.Guidelines.Enabled
+		guidelines := result.Guidelines
 
-		if len(guidelines) > 0 {
-			guidelinesDir := filepath.Join(outputDir, "content", "guidelines")
-			if err := os.MkdirAll(guidelinesDir, 0o755); err != nil {
-				return fmt.Errorf("creating guidelines directory: %w", err)
+		if guidelinesEnabled && len(guidelines) > 0 {
+			// Apply ordering and exclusion from config.
+			var guidelineWarnings []parser.ParseWarning
+			guidelines, guidelineWarnings = applyGuidelinesConfig(guidelines, cfg.Guidelines)
+			// Log config validation warnings (for example, unmatched order stems) to stderr.
+			for _, w := range guidelineWarnings {
+				fmt.Fprintf(os.Stderr, "Warning: guidelines config: %s: %s\n", w.File, w.Message)
 			}
+			guidelinesCount = len(guidelines)
 
-			sectionTitle := cfg.Guidelines.SectionTitle
-			if err := generateGuidelinesIndex(sectionTitle, guidelinesDir); err != nil {
-				return err
-			}
+			if len(guidelines) > 0 {
+				guidelinesDir := filepath.Join(outputDir, "content", "guidelines")
+				if err := os.MkdirAll(guidelinesDir, 0o755); err != nil {
+					return fmt.Errorf("creating guidelines directory: %w", err)
+				}
 
-			for _, g := range guidelines {
-				if err := GenerateGuideline(g, guidelinesDir); err != nil {
+				sectionTitle := cfg.Guidelines.SectionTitle
+				if err := generateGuidelinesIndex(sectionTitle, guidelinesDir); err != nil {
 					return err
+				}
+
+				for _, g := range guidelines {
+					if err := GenerateGuideline(g, guidelinesDir); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -156,6 +179,19 @@ func AssignCategories(rules []*parser.ValeRule, cfg *config.Config) {
 			rule.Category = rule.Extends
 		}
 	}
+}
+
+// buildCategoriesMap constructs a map[string][]string where keys are category
+// names and values are lists of rule names belonging to that category.
+// This is derived from each rule's Category field (set by AssignCategories).
+func buildCategoriesMap(rules []*parser.ValeRule) map[string][]string {
+	result := make(map[string][]string)
+	for _, rule := range rules {
+		for _, cat := range categoriesFromRule(rule) {
+			result[cat] = append(result[cat], rule.Name)
+		}
+	}
+	return result
 }
 
 // generateHugoTOML writes hugo.toml from config values.

@@ -886,3 +886,303 @@ func TestGenerateSite_GuidelinesDisabled(t *testing.T) {
 		t.Error("content/guidelines/ should not exist when guidelines are disabled")
 	}
 }
+
+// ── GenerateSite with pages ───────────────────────────────────────────────────
+
+func TestGenerateSite_WithPages_CreatesPageFiles(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Pages: &parser.SectionTree{
+			Name:  "pages",
+			Title: "Pages",
+			Path:  "/pages/",
+			Children: []*parser.SectionTree{
+				{
+					Name:  "language",
+					Title: "Language",
+					Path:  "/pages/language/",
+					Pages: []*parser.Page{
+						{Title: "Active Voice", Body: "Use active voice.", Path: "/pages/language/active-voice/"},
+					},
+				},
+			},
+		},
+	}
+	cfg := &config.Config{
+		Title:   "Test Guide",
+		BaseURL: "/",
+		Categories: map[string][]string{
+			"Style": {"Avoid"},
+		},
+	}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// content/pages/ directory should exist.
+	pagesDir := filepath.Join(outDir, "content", "pages")
+	if _, err := os.Stat(pagesDir); os.IsNotExist(err) {
+		t.Error("expected content/pages/ directory to exist")
+	}
+
+	// content/pages/language/active-voice.md should exist.
+	pagePath := filepath.Join(outDir, "content", "pages", "language", "active-voice.md")
+	if _, err := os.Stat(pagePath); os.IsNotExist(err) {
+		t.Error("expected content/pages/language/active-voice.md to exist")
+	}
+
+	// data/navigation.json should exist.
+	navPath := filepath.Join(outDir, "data", "navigation.json")
+	if _, err := os.Stat(navPath); os.IsNotExist(err) {
+		t.Error("expected data/navigation.json to exist")
+	}
+
+	// Verify navigation.json has correct structure.
+	navData := readFile(t, navPath)
+	var nav map[string]interface{}
+	if err := json.Unmarshal([]byte(navData), &nav); err != nil {
+		t.Fatalf("navigation.json is not valid JSON: %v\n%s", err, navData)
+	}
+
+	sections, ok := nav["sections"].([]interface{})
+	if !ok {
+		t.Fatal("expected sections array in navigation.json")
+	}
+	if len(sections) != 1 {
+		t.Errorf("expected 1 section, got %d", len(sections))
+	}
+
+	rulesSection, ok := nav["rules_section"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected rules_section in navigation.json")
+	}
+	cats, ok := rulesSection["categories"].([]interface{})
+	if !ok {
+		t.Fatal("expected categories in rules_section")
+	}
+	if len(cats) != 1 {
+		t.Errorf("expected 1 category, got %d", len(cats))
+	}
+}
+
+func TestGenerateSite_WithoutPages_GuidelinesRun(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Weight: 10, Body: "Write clearly."},
+		},
+		// Pages is nil — no pages/ directory
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// Guidelines should be generated.
+	guidelinesDir := filepath.Join(outDir, "content", "guidelines")
+	if _, err := os.Stat(guidelinesDir); os.IsNotExist(err) {
+		t.Error("expected content/guidelines/ to exist when no pages and guidelines present")
+	}
+
+	// Pages directory should NOT exist.
+	pagesDir := filepath.Join(outDir, "content", "pages")
+	if _, err := os.Stat(pagesDir); !os.IsNotExist(err) {
+		t.Error("content/pages/ should not exist when no pages tree provided")
+	}
+
+	// navigation.json should NOT exist.
+	navPath := filepath.Join(outDir, "data", "navigation.json")
+	if _, err := os.Stat(navPath); !os.IsNotExist(err) {
+		t.Error("navigation.json should not exist when no pages tree provided")
+	}
+}
+
+func TestGenerateSite_WithPages_AND_Guidelines_PagesWins(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Weight: 10, Body: "Write clearly."},
+		},
+		Pages: &parser.SectionTree{
+			Name:  "pages",
+			Title: "Pages",
+			Path:  "/pages/",
+			Children: []*parser.SectionTree{
+				{
+					Name:  "language",
+					Title: "Language",
+					Path:  "/pages/language/",
+					Pages: []*parser.Page{
+						{Title: "Active Voice", Body: "Use active voice.", Path: "/pages/language/active-voice/"},
+					},
+				},
+			},
+		},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// Pages should be generated.
+	pagePath := filepath.Join(outDir, "content", "pages", "language", "active-voice.md")
+	if _, err := os.Stat(pagePath); os.IsNotExist(err) {
+		t.Error("expected page file to exist when pages supersede guidelines")
+	}
+
+	// Guidelines should NOT be generated (pages supersedes).
+	guidelinesDir := filepath.Join(outDir, "content", "guidelines")
+	if _, err := os.Stat(guidelinesDir); !os.IsNotExist(err) {
+		t.Error("content/guidelines/ should not exist when pages are present (pages supersedes guidelines)")
+	}
+
+	// navigation.json should exist.
+	navPath := filepath.Join(outDir, "data", "navigation.json")
+	if _, err := os.Stat(navPath); os.IsNotExist(err) {
+		t.Error("expected data/navigation.json to exist when pages present")
+	}
+}
+
+func TestGenerateSite_WithEmptyPages_GuidelinesRun(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{
+			makeRule("Avoid", "existence", "error"),
+		},
+		Guidelines: []*parser.Guideline{
+			{Name: "voice-and-tone", Title: "Voice and Tone", Weight: 10, Body: "Write clearly."},
+		},
+		Pages: &parser.SectionTree{
+			Name:  "pages",
+			Title: "Pages",
+			Path:  "/pages/",
+			// Empty tree — no pages, no children, no IndexPage
+		},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// Empty pages tree should be treated as "no pages" → guidelines run.
+	guidelinesDir := filepath.Join(outDir, "content", "guidelines")
+	if _, err := os.Stat(guidelinesDir); os.IsNotExist(err) {
+		t.Error("expected content/guidelines/ when pages tree is empty")
+	}
+}
+
+// ── CountPages ────────────────────────────────────────────────────────────────
+
+func TestCountPages_NilTree(t *testing.T) {
+	if got := generator.CountPages(nil); got != 0 {
+		t.Errorf("CountPages(nil) = %d, want 0", got)
+	}
+}
+
+func TestCountPages_EmptyTree(t *testing.T) {
+	tree := &parser.SectionTree{Name: "pages", Title: "Pages", Path: "/pages/"}
+	if got := generator.CountPages(tree); got != 0 {
+		t.Errorf("CountPages(empty) = %d, want 0", got)
+	}
+}
+
+func TestCountPages_FlatTree(t *testing.T) {
+	tree := &parser.SectionTree{
+		Name:  "pages",
+		Title: "Pages",
+		Path:  "/pages/",
+		Pages: []*parser.Page{
+			{Title: "A", Path: "/pages/a/"},
+			{Title: "B", Path: "/pages/b/"},
+		},
+	}
+	if got := generator.CountPages(tree); got != 2 {
+		t.Errorf("CountPages(flat) = %d, want 2", got)
+	}
+}
+
+func TestCountPages_NestedTree(t *testing.T) {
+	tree := &parser.SectionTree{
+		Name:  "pages",
+		Title: "Pages",
+		Path:  "/pages/",
+		Pages: []*parser.Page{
+			{Title: "Root Page", Path: "/pages/root/"},
+		},
+		Children: []*parser.SectionTree{
+			{
+				Name:  "language",
+				Title: "Language",
+				Path:  "/pages/language/",
+				Pages: []*parser.Page{
+					{Title: "Active Voice", Path: "/pages/language/active-voice/"},
+					{Title: "Pronouns", Path: "/pages/language/pronouns/"},
+				},
+				Children: []*parser.SectionTree{
+					{
+						Name:  "advanced",
+						Title: "Advanced",
+						Path:  "/pages/language/advanced/",
+						Pages: []*parser.Page{
+							{Title: "Subjunctive", Path: "/pages/language/advanced/subjunctive/"},
+						},
+					},
+				},
+			},
+			{
+				Name:  "formatting",
+				Title: "Formatting",
+				Path:  "/pages/formatting/",
+				Pages: []*parser.Page{
+					{Title: "Headings", Path: "/pages/formatting/headings/"},
+				},
+			},
+		},
+	}
+	// 1 root + 2 language + 1 advanced + 1 formatting = 5
+	if got := generator.CountPages(tree); got != 5 {
+		t.Errorf("CountPages(nested) = %d, want 5", got)
+	}
+}
+
+func TestCountPages_TreeWithIndexPages(t *testing.T) {
+	tree := &parser.SectionTree{
+		Name:      "pages",
+		Title:     "Pages",
+		Path:      "/pages/",
+		IndexPage: &parser.Page{Title: "Hub", Path: "/pages/"},
+		Pages: []*parser.Page{
+			{Title: "A", Path: "/pages/a/"},
+		},
+		Children: []*parser.SectionTree{
+			{
+				Name:      "language",
+				Title:     "Language",
+				Path:      "/pages/language/",
+				IndexPage: &parser.Page{Title: "Language Hub", Path: "/pages/language/"},
+				Pages: []*parser.Page{
+					{Title: "Voice", Path: "/pages/language/voice/"},
+				},
+			},
+		},
+	}
+	// IndexPages count: 2 (root hub + language hub)
+	// Pages count: 2 (a + voice)
+	// Total: 4
+	if got := generator.CountPages(tree); got != 4 {
+		t.Errorf("CountPages(with index pages) = %d, want 4", got)
+	}
+}

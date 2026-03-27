@@ -1,6 +1,7 @@
 package hugo
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -47,6 +48,7 @@ func TestThemeFS_ContainsPartials(t *testing.T) {
 	partials := []string{
 		"theme/layouts/partials/head.html",
 		"theme/layouts/partials/sidebar.html",
+		"theme/layouts/partials/sidebar-section.html",
 		"theme/layouts/partials/search.html",
 		"theme/layouts/partials/severity-badge.html",
 		"theme/layouts/partials/rule-details.html",
@@ -221,6 +223,143 @@ func TestSingleHTML_PagefindAttributes(t *testing.T) {
 	}
 }
 
+// TestSidebarHTML_DualModeStructure verifies the sidebar template has the
+// data-driven mode (navigation.json) with the taxonomy/guidelines fallback
+// in the {{ else }} branch. Both modes must not execute simultaneously.
+func TestSidebarHTML_DualModeStructure(t *testing.T) {
+	data, err := themeFS.ReadFile("theme/layouts/partials/sidebar.html")
+	if err != nil {
+		t.Fatalf("reading sidebar.html: %v", err)
+	}
+	content := string(data)
+
+	mustContain := []struct {
+		substr string
+		reason string
+	}{
+		{`hugo.Data "navigation"`, "must access navigation.json via Hugo data"},
+		{`.sections`, "must iterate sections from navigation data"},
+		{`.rules_section`, "must access rules_section from navigation data"},
+		{`sidebar-section.html`, "must call recursive sidebar-section partial"},
+		{`site.Taxonomies.categories`, "must preserve taxonomy fallback in else branch"},
+		{`site.Taxonomies.ruletypes`, "must preserve ruletypes fallback in else branch"},
+		{`sidebar-guidelines`, "must preserve guidelines section in else branch"},
+	}
+	for _, tc := range mustContain {
+		if !strings.Contains(content, tc.substr) {
+			t.Errorf("sidebar.html %s — missing %q", tc.reason, tc.substr)
+		}
+	}
+}
+
+// TestSidebarHTML_RulesPositionInterleaving verifies the sidebar template
+// handles rules_section.position for interleaving rules among page sections.
+func TestSidebarHTML_RulesPositionInterleaving(t *testing.T) {
+	data, err := themeFS.ReadFile("theme/layouts/partials/sidebar.html")
+	if err != nil {
+		t.Fatalf("reading sidebar.html: %v", err)
+	}
+	content := string(data)
+
+	// sidebar.html must reference position and delegate to the rules partial.
+	sidebarMustContain := []struct {
+		substr string
+		reason string
+	}{
+		{`.rules_section.position`, "must reference rules position for interleaving"},
+		{`sidebar-rules-section.html`, "must call the rules section partial"},
+	}
+	for _, tc := range sidebarMustContain {
+		if !strings.Contains(content, tc.substr) {
+			t.Errorf("sidebar.html %s — missing %q", tc.reason, tc.substr)
+		}
+	}
+
+	// sidebar-rules-section.html must render categories and title.
+	rulesData, err := themeFS.ReadFile("theme/layouts/partials/sidebar-rules-section.html")
+	if err != nil {
+		t.Fatalf("reading sidebar-rules-section.html: %v", err)
+	}
+	rulesContent := string(rulesData)
+
+	rulesMustContain := []struct {
+		substr string
+		reason string
+	}{
+		{`$rulesSection.categories`, "must iterate rule categories"},
+		{`$rulesSection.title`, "must render rules section title"},
+	}
+	for _, tc := range rulesMustContain {
+		if !strings.Contains(rulesContent, tc.substr) {
+			t.Errorf("sidebar-rules-section.html %s — missing %q", tc.reason, tc.substr)
+		}
+	}
+}
+
+// TestSidebarSectionHTML_RecursiveStructure verifies the sidebar-section partial
+// has recursive template calling with depth threading and details/summary markup.
+func TestSidebarSectionHTML_RecursiveStructure(t *testing.T) {
+	data, err := themeFS.ReadFile("theme/layouts/partials/sidebar-section.html")
+	if err != nil {
+		t.Fatalf("reading sidebar-section.html: %v", err)
+	}
+	content := string(data)
+
+	mustContain := []struct {
+		substr string
+		reason string
+	}{
+		{`sidebar-depth-`, "must apply depth CSS class to element"},
+		{`.depth`, "must receive depth from caller context"},
+		{`.section`, "must receive section from caller context"},
+		{`.currentURL`, "must receive currentURL for active highlighting"},
+		{`<details`, "must use details element for collapsible sections"},
+		{`<summary`, "must use summary element for section headers"},
+		{`.collapsed`, "must check collapsed state for details open attribute"},
+		{`.pages`, "must iterate section pages"},
+		{`.children`, "must iterate children for recursion"},
+		{`sidebar-section.html`, "must call itself recursively for children"},
+		{`add $depth 1`, "must increment depth for child recursion"},
+		{` active`, "must apply active class for current page"},
+	}
+	for _, tc := range mustContain {
+		if !strings.Contains(content, tc.substr) {
+			t.Errorf("sidebar-section.html %s — missing %q", tc.reason, tc.substr)
+		}
+	}
+}
+
+// TestStyleCSS_SidebarDepthClasses verifies the CSS contains depth classes
+// for sidebar nesting indentation up to 6 levels.
+func TestStyleCSS_SidebarDepthClasses(t *testing.T) {
+	data, err := themeFS.ReadFile("theme/static/css/style.css")
+	if err != nil {
+		t.Fatalf("reading style.css: %v", err)
+	}
+	content := string(data)
+
+	for i := 1; i <= 6; i++ {
+		class := fmt.Sprintf(".sidebar-depth-%d", i)
+		if !strings.Contains(content, class) {
+			t.Errorf("style.css missing depth class %s", class)
+		}
+	}
+}
+
+// TestStyleCSS_SidebarActivePageStyle verifies active page styling exists
+// for the data-driven sidebar links.
+func TestStyleCSS_SidebarActivePageStyle(t *testing.T) {
+	data, err := themeFS.ReadFile("theme/static/css/style.css")
+	if err != nil {
+		t.Fatalf("reading style.css: %v", err)
+	}
+	content := string(data)
+
+	// The active class on sidebar items should have styling
+	if !strings.Contains(content, ".sidebar-item.active") {
+		t.Error("style.css missing .sidebar-item.active styling")
+	}
+}
 // TestThemeFS_FileCount verifies we have a reasonable number of files embedded.
 func TestThemeFS_FileCount(t *testing.T) {
 	count := 0

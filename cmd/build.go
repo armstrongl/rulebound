@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/larah/rulebound/internal/config"
+	"github.com/larah/rulebound/internal/generator"
 	hugobuilder "github.com/larah/rulebound/internal/hugo"
 	"github.com/larah/rulebound/internal/parser"
 	"github.com/spf13/cobra"
@@ -100,6 +101,18 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// ── Honor pages.enabled config ───────────────────────────────────────
+	if cfg.Pages.Enabled != nil && !*cfg.Pages.Enabled {
+		result.Pages = nil
+	}
+
+	// ── Deprecation warning: guidelines config with pages/ ────────────────
+	if result.Pages != nil && !generator.SectionTreeIsEmpty(result.Pages) {
+		if guidelinesConfigHasNonDefaults(cfg.Guidelines) {
+			fmt.Fprintln(os.Stderr, "Warning: guidelines config is deprecated when pages/ directory exists. Migrate to pages/guidelines/.")
+		}
+	}
+
 	// ── Find and verify Hugo ──────────────────────────────────────────────
 	hugoBin, err := hugobuilder.FindHugo(buildHugo)
 	if err != nil {
@@ -116,7 +129,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	// ── Scaffold Hugo project ─────────────────────────────────────────────
-	scaffold, err := hugobuilder.Scaffold(result, cfg)
+	scaffold, err := hugobuilder.Scaffold(result, cfg, packagePath)
 	if err != nil {
 		if scaffold != nil && scaffold.TempDir != "" {
 			os.RemoveAll(scaffold.TempDir)
@@ -193,6 +206,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	if skipped > 0 {
 		fmt.Print(" (see warnings above)")
 	}
+	if result.Pages != nil && !generator.SectionTreeIsEmpty(result.Pages) {
+		pageCount := generator.CountPages(result.Pages)
+		fmt.Printf(", %d pages", pageCount)
+	}
 	fmt.Println(".")
 	fmt.Printf("Output: %s\n", outputDir)
 
@@ -211,6 +228,24 @@ func (e *exitError) Error() string {
 
 func (e *exitError) Unwrap() error {
 	return e.err
+}
+
+// guidelinesConfigHasNonDefaults returns true if the guidelines config has any
+// explicitly set value (Enabled pointer, section title, order list, or exclude list).
+func guidelinesConfigHasNonDefaults(cfg config.GuidelinesConfig) bool {
+	if cfg.Enabled != nil {
+		return true
+	}
+	if cfg.SectionTitle != "" {
+		return true
+	}
+	if len(cfg.Order) > 0 {
+		return true
+	}
+	if len(cfg.Exclude) > 0 {
+		return true
+	}
+	return false
 }
 
 // mapBuildError converts a *hugo.BuildError to an *exitError for the CLI layer.

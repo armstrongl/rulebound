@@ -151,10 +151,78 @@ type Guideline struct {
 	SourceFile string
 }
 
+// Page represents a parsed content page Markdown file from the pages/ directory.
+type Page struct {
+	// Title holds the title from YAML frontmatter, or derived from filename.
+	Title string
+
+	// Description holds the description from YAML frontmatter. Optional.
+	Description string
+
+	// Body holds the Markdown content after frontmatter extraction.
+	Body string
+
+	// SourceFile is the absolute path of the original .md file.
+	SourceFile string
+
+	// Path is the Hugo URL path, computed from filesystem position relative to pages/.
+	Path string
+
+	// Hidden marks pages excluded from sidebar navigation and Pagefind indexing.
+	Hidden bool
+}
+
+// SectionMeta holds navigation metadata parsed from a _meta.yml file.
+type SectionMeta struct {
+	// Title overrides the display name for this directory in the sidebar.
+	Title string `yaml:"title"`
+
+	// Order defines sidebar sequence by filename (without extension).
+	// Unlisted files sort alphabetically after ordered ones.
+	// Supports a reserved "rules" keyword at the top level.
+	Order []string `yaml:"order"`
+
+	// Collapsed controls whether the section starts collapsed in the sidebar.
+	Collapsed bool `yaml:"collapsed"`
+
+	// Hidden lists filenames to exclude from sidebar navigation.
+	Hidden []string `yaml:"hidden"`
+
+	// RulesTitle overrides the display name for the auto-generated rules section.
+	// Only meaningful at the top level.
+	RulesTitle string `yaml:"rules_title"`
+}
+
+// SectionTree represents a nested directory of content pages.
+// Each node corresponds to a directory under pages/.
+type SectionTree struct {
+	// Name is the directory name (for example, "language-and-grammar").
+	Name string
+
+	// Title is the display title (from _meta.yml or derived from directory name).
+	Title string
+
+	// Path is the Hugo URL path for this section.
+	Path string
+
+	// Pages holds the content pages in this directory.
+	Pages []*Page
+
+	// Children holds nested subdirectory sections.
+	Children []*SectionTree
+
+	// Meta holds navigation metadata from _meta.yml. Nil when no _meta.yml exists.
+	Meta *SectionMeta
+
+	// IndexPage holds the hub page from _index.md. Nil when no _index.md exists.
+	IndexPage *Page
+}
+
 // ParseResult holds all parsed content from a Vale package directory.
 type ParseResult struct {
 	Rules      []*ValeRule
 	Guidelines []*Guideline
+	Pages      *SectionTree
 	Warnings   []ParseWarning
 }
 
