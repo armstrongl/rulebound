@@ -10,6 +10,7 @@
       {{- partial "severity-badge.html" ($p.level | default "suggestion") -}}
       <span data-pagefind-filter="severity" hidden>{{ $p.level | default "suggestion" }}</span>
       <span data-pagefind-meta="severity:{{ $p.level | default "suggestion" }}, type:{{ $p.extends }}" hidden></span>
+      {{- /* Forward-planted for rule/guideline distinction once guidelines ship */ -}}
       <span data-pagefind-filter="content_type:rule" hidden></span>
     </div>
 
