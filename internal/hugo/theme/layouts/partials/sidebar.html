@@ -1,10 +1,19 @@
 {{- /*
   sidebar.html
-  Navigation sidebar.
-  - Primary grouping: custom categories from taxonomy (site.Taxonomies.categories)
-  - Fallback grouping: extends type (site.Taxonomies.ruletypes)
-  - Each rule link shows a small severity indicator dot
-  - On mobile the sidebar is toggled via the hamburger button in baseof.html
+  Navigation sidebar with two rendering modes:
+
+  Mode 1 — Data-driven (when navigation.json exists):
+    Renders sections and rules from data/navigation.json using a recursive
+    sidebar-section.html partial. Supports nested sections up to 6 levels,
+    collapsible details/summary blocks, and interleaved rules positioning.
+
+  Mode 2 — Taxonomy fallback (when no navigation.json):
+    Preserves the original taxonomy-based rendering (categories, ruletypes,
+    guidelines). This is the backward-compatible path for sites without
+    a pages/ directory.
+
+  Only one mode executes per build — they are mutually exclusive via
+  {{ with }} / {{ else }}.
 */ -}}
 
 <nav class="sidebar" id="sidebar" aria-label="Rule navigation">
@@ -19,80 +28,143 @@
     {{- partial "search.html" . -}}
   </div>
 
-  {{- /* ── Navigation grouped by category ───────────────────────────── */ -}}
+  {{- /* ── Mode selection ─────────────────────────────────────────── */ -}}
+  {{- $nav := (index hugo.Data "navigation") -}}
+  {{- with $nav -}}
 
-  {{- $hasCats := false -}}
-  {{- with site.Taxonomies.categories -}}
-    {{- if gt (len .) 0 -}}
-      {{- $hasCats = true -}}
-      {{- range $catName, $catPages := . -}}
-        <div class="sidebar-group">
-          <h3 class="sidebar-group-title">{{ $catName | humanize | title }}</h3>
-          <ul class="sidebar-list">
-            {{- range $catPages.Pages -}}
-              {{- $active := eq $.RelPermalink .RelPermalink -}}
-              <li class="sidebar-item{{ if $active }} active{{ end }}">
-                <a href="{{ .RelPermalink }}" class="sidebar-link">
-                  {{- with .Params.level -}}
-                    <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
-                  {{- end -}}
-                  <span class="sidebar-link-text">{{ .Title }}</span>
-                </a>
-              </li>
-            {{- end -}}
-          </ul>
-        </div>
+    {{- /* ── Mode 1: Data-driven sidebar from navigation.json ───── */ -}}
+
+    {{- $currentURL := $.RelPermalink -}}
+    {{- $rulesPos := .rules_section.position -}}
+    {{- $sections := .sections -}}
+    {{- $rulesSection := .rules_section -}}
+
+    {{- /* Render rules section at position 0 (before all sections) */ -}}
+    {{- if eq $rulesPos 0 -}}
+      {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+    {{- end -}}
+
+    {{- range $i, $section := $sections -}}
+
+      {{- /* Render the page section */ -}}
+      {{- partial "sidebar-section.html" (dict "section" $section "depth" 1 "currentURL" $currentURL) -}}
+
+      {{- /* Render rules section after this section if position matches (1-indexed) */ -}}
+      {{- if eq $rulesPos (add $i 1) -}}
+        {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+      {{- end -}}
+
+    {{- end -}}
+
+    {{- /* Render rules section at the end if position is -1 (default/bottom) */ -}}
+    {{- if eq $rulesPos -1 -}}
+      {{- template "rules-section" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+    {{- end -}}
+
+  {{- else -}}
+
+    {{- /* ── Mode 2: Taxonomy-driven sidebar (backward compatible) ─ */ -}}
+
+    {{- /* Navigation grouped by category */ -}}
+    {{- $hasCats := false -}}
+    {{- with site.Taxonomies.categories -}}
+      {{- if gt (len .) 0 -}}
+        {{- $hasCats = true -}}
+        {{- range $catName, $catPages := . -}}
+          <div class="sidebar-group">
+            <h3 class="sidebar-group-title">{{ $catName | humanize | title }}</h3>
+            <ul class="sidebar-list">
+              {{- range $catPages.Pages -}}
+                {{- $active := eq $.RelPermalink .RelPermalink -}}
+                <li class="sidebar-item{{ if $active }} active{{ end }}">
+                  <a href="{{ .RelPermalink }}" class="sidebar-link">
+                    {{- with .Params.level -}}
+                      <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
+                    {{- end -}}
+                    <span class="sidebar-link-text">{{ .Title }}</span>
+                  </a>
+                </li>
+              {{- end -}}
+            </ul>
+          </div>
+        {{- end -}}
       {{- end -}}
     {{- end -}}
-  {{- end -}}
 
-  {{- /* Fallback: group by rule type if no categories are defined */ -}}
-  {{- if not $hasCats -}}
-    {{- with site.Taxonomies.ruletypes -}}
-      {{- range $typeName, $typePages := . -}}
-        <div class="sidebar-group">
-          <h3 class="sidebar-group-title">{{ $typeName | humanize | title }}</h3>
-          <ul class="sidebar-list">
-            {{- range $typePages.Pages -}}
-              {{- $active := eq $.RelPermalink .RelPermalink -}}
-              <li class="sidebar-item{{ if $active }} active{{ end }}">
-                <a href="{{ .RelPermalink }}" class="sidebar-link">
-                  {{- with .Params.level -}}
-                    <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
-                  {{- end -}}
-                  <span class="sidebar-link-text">{{ .Title }}</span>
-                </a>
-              </li>
-            {{- end -}}
-          </ul>
-        </div>
+    {{- /* Fallback: group by rule type if no categories are defined */ -}}
+    {{- if not $hasCats -}}
+      {{- with site.Taxonomies.ruletypes -}}
+        {{- range $typeName, $typePages := . -}}
+          <div class="sidebar-group">
+            <h3 class="sidebar-group-title">{{ $typeName | humanize | title }}</h3>
+            <ul class="sidebar-list">
+              {{- range $typePages.Pages -}}
+                {{- $active := eq $.RelPermalink .RelPermalink -}}
+                <li class="sidebar-item{{ if $active }} active{{ end }}">
+                  <a href="{{ .RelPermalink }}" class="sidebar-link">
+                    {{- with .Params.level -}}
+                      <span class="severity-dot severity-dot--{{ . }}" title="{{ . }}" aria-label="{{ . }}"></span>
+                    {{- end -}}
+                    <span class="sidebar-link-text">{{ .Title }}</span>
+                  </a>
+                </li>
+              {{- end -}}
+            </ul>
+          </div>
+        {{- end -}}
       {{- end -}}
     {{- end -}}
-  {{- end -}}
 
-  {{- /* ── Guidelines section ─────────────────────────────────── */ -}}
-  {{- $guidelines := where site.RegularPages "Type" "guideline" -}}
-  {{- if gt (len $guidelines) 0 -}}
-    {{- $siteData := index hugo.Data "site" -}}
-    <div class="sidebar-group sidebar-guidelines">
-      <h3 class="sidebar-group-title">
-        {{- with $siteData.guidelines_section_title -}}
-          {{ . }}
-        {{- else -}}
-          Guidelines
-        {{- end -}}
-      </h3>
-      <ul class="sidebar-list">
-        {{- range $guidelines.ByWeight -}}
-          {{- $active := eq $.RelPermalink .RelPermalink -}}
-          <li class="sidebar-item{{ if $active }} active{{ end }}">
-            <a href="{{ .RelPermalink }}" class="sidebar-link">
-              <span class="sidebar-link-text">{{ .Title }}</span>
-            </a>
-          </li>
-        {{- end -}}
-      </ul>
-    </div>
+    {{- /* Guidelines section */ -}}
+    {{- $guidelines := where site.RegularPages "Type" "guideline" -}}
+    {{- if gt (len $guidelines) 0 -}}
+      {{- $siteData := index hugo.Data "site" -}}
+      <div class="sidebar-group sidebar-guidelines">
+        <h3 class="sidebar-group-title">
+          {{- with $siteData.guidelines_section_title -}}
+            {{ . }}
+          {{- else -}}
+            Guidelines
+          {{- end -}}
+        </h3>
+        <ul class="sidebar-list">
+          {{- range $guidelines.ByWeight -}}
+            {{- $active := eq $.RelPermalink .RelPermalink -}}
+            <li class="sidebar-item{{ if $active }} active{{ end }}">
+              <a href="{{ .RelPermalink }}" class="sidebar-link">
+                <span class="sidebar-link-text">{{ .Title }}</span>
+              </a>
+            </li>
+          {{- end -}}
+        </ul>
+      </div>
+    {{- end -}}
+
   {{- end -}}
 
 </nav>
+
+{{- /* ── Rules section inline template ────────────────────────────── */ -}}
+{{- define "rules-section" -}}
+  {{- $rulesSection := .rulesSection -}}
+  {{- $currentURL := .currentURL -}}
+  {{- with $rulesSection.categories -}}
+    <details class="sidebar-section sidebar-depth-1" open>
+      <summary class="sidebar-section-title">{{ $rulesSection.title }}</summary>
+      {{- range $rulesSection.categories -}}
+        <details class="sidebar-section sidebar-depth-2" open>
+          <summary class="sidebar-section-title">{{ .title }}</summary>
+          <ul class="sidebar-list">
+            {{- range .rules -}}
+              <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
+                <a href="{{ .path }}" class="sidebar-link">
+                  <span class="sidebar-link-text">{{ .title }}</span>
+                </a>
+              </li>
+            {{- end -}}
+          </ul>
+        </details>
+      {{- end -}}
+    </details>
+  {{- end -}}
+{{- end -}}
