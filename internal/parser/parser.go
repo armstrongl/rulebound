@@ -378,9 +378,17 @@ func ParsePackage(dir string) (*ParseResult, error) {
 	}
 	warnings = append(warnings, guidelineWarnings...)
 
+	// Parse pages from pages/ subdirectory.
+	pages, pageWarnings, err := parsePages(dir)
+	if err != nil {
+		return nil, fmt.Errorf("parsing pages: %w", err)
+	}
+	warnings = append(warnings, pageWarnings...)
+
 	return &ParseResult{
 		Rules:      rules,
 		Guidelines: guidelines,
+		Pages:      pages,
 		Warnings:   warnings,
 	}, nil
 }

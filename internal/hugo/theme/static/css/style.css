@@ -19,6 +19,7 @@
   --color-link-hover:  #033d8b;
   --color-code-bg:     #f1f3f5;
   --color-code-text:   #c7254e;
+  --color-highlight:   #fff3cd;
 
   /* Severity */
   --color-error:       #dc3545;
@@ -219,7 +220,7 @@ details[open] > summary::before { transform: rotate(90deg); }
   border-bottom: 1px solid var(--color-border-light);
 }
 
-/* Suppress Pagefind UI styling in sidebar until Phase 5 adds the real assets */
+/* Prevent layout shift before Pagefind assets load */
 .sidebar-search .search-widget { min-height: 0; }
 
 .sidebar-group {
@@ -849,10 +850,162 @@ em.matched-text {
   font-size: 0.875rem;
 }
 
+/* ── Page content (generic pages) ────────────────────────── */
+.page-content { max-width: var(--content-max); }
+
+.page-header { margin-bottom: 1.5rem; }
+
+.page-body { line-height: 1.7; }
+
+.page-children { margin-top: 1.5rem; }
+
+.page-children-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.page-children-list li { margin: 0; }
+
+.page-children-list a {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
 /* ── Guidelines sidebar section ───────────────────────────── */
 .sidebar-guidelines {
   border-top: 1px solid var(--color-border-light);
   margin-top: 0.25rem;
+}
+
+/* ── Data-driven sidebar sections ────────────────────────── */
+.sidebar-section {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+.sidebar-section > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.sidebar-section > summary::-webkit-details-marker { display: none; }
+/* Override the global details > summary::before for sidebar sections */
+.sidebar-section > summary::before {
+  content: '\25B6';
+  font-size: 0.55em;
+  margin-right: 0.35em;
+  transition: transform 0.15s;
+  vertical-align: middle;
+}
+.sidebar-section[open] > summary::before {
+  transform: rotate(90deg);
+}
+.sidebar-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  padding: 0.5rem 1rem 0.35rem;
+  margin: 0;
+  display: block;
+}
+.sidebar-section-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.sidebar-section-title a:hover {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+/* Depth indentation for nested sidebar sections.
+   Links are indented 0.75rem beyond their section title to
+   align under the title text (past the triangle marker). */
+.sidebar-depth-1 > .sidebar-list .sidebar-link     { padding-left: 1.75rem; }
+.sidebar-depth-2 > summary.sidebar-section-title { padding-left: 1.75rem; }
+.sidebar-depth-2 > .sidebar-list .sidebar-link     { padding-left: 2.5rem; }
+.sidebar-depth-3 > summary.sidebar-section-title { padding-left: 2.5rem; }
+.sidebar-depth-3 > .sidebar-list .sidebar-link     { padding-left: 3.25rem; }
+.sidebar-depth-4 > summary.sidebar-section-title { padding-left: 3.25rem; }
+.sidebar-depth-4 > .sidebar-list .sidebar-link     { padding-left: 4rem; }
+.sidebar-depth-5 > summary.sidebar-section-title { padding-left: 4rem; }
+.sidebar-depth-5 > .sidebar-list .sidebar-link     { padding-left: 4.75rem; }
+.sidebar-depth-6 > summary.sidebar-section-title { padding-left: 4.75rem; }
+.sidebar-depth-6 > .sidebar-list .sidebar-link     { padding-left: 5.5rem; }
+
+/* ── Pagefind Modular UI overrides (sidebar-compact) ─────── */
+.sidebar-search {
+  --pagefind-ui-scale: 0.55;
+  --pagefind-ui-primary: var(--color-link);
+  --pagefind-ui-text: var(--color-text);
+  --pagefind-ui-background: var(--color-bg);
+  --pagefind-ui-border: var(--color-border);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: var(--radius);
+  --pagefind-ui-tag: var(--color-surface);
+  --pagefind-ui-font: var(--font-sans);
+}
+.sidebar-search .pagefind-modular-input {
+  font-weight: 400;
+}
+.sidebar-search .pagefind-modular-filter-pills-wrapper {
+  overflow-x: hidden;
+  padding: 6px 0;
+}
+.sidebar-search .pagefind-modular-filter-pills {
+  flex-wrap: wrap;
+}
+.sidebar-search .pagefind-modular-filter-pill {
+  font-size: 0.7rem;
+  height: auto;
+  padding: 0.2em 0.55em;
+}
+.sidebar-search .pagefind-modular-list-result {
+  padding: 0;
+  border: none;
+}
+
+/* ── Search results (custom resultTemplate) ──────────────── */
+.search-result-item {
+  list-style: none;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+.search-result-link:hover .search-result-title { text-decoration: underline; }
+.search-result-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-link);
+}
+.search-result-badges {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.search-result-excerpt {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
+.search-result-excerpt mark {
+  background: var(--color-highlight);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 0.1em;
 }
 
 /* ── Secondary button ─────────────────────────────────────── */

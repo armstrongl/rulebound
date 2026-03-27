@@ -30,6 +30,9 @@ type Config struct {
 
 	// Guidelines controls how editorial guidelines are processed.
 	Guidelines GuidelinesConfig `yaml:"guidelines"`
+
+	// Pages controls how content pages are processed.
+	Pages PagesConfig `yaml:"pages"`
 }
 
 // GuidelinesConfig controls how the build processes editorial guidelines.
@@ -41,6 +44,12 @@ type GuidelinesConfig struct {
 	// Exclude skips specific files by stem name (takes precedence over order).
 	Exclude []string `yaml:"exclude"`
 	// Enabled controls auto-detection. Default: true (nil means true).
+	Enabled *bool `yaml:"enabled"`
+}
+
+// PagesConfig controls how the build processes content pages.
+type PagesConfig struct {
+	// Enabled controls auto-detection of the pages/ directory. Default: true (nil means true).
 	Enabled *bool `yaml:"enabled"`
 }
 

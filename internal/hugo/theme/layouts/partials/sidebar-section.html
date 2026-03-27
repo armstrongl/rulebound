@@ -1,0 +1,44 @@
+{{- /*
+  sidebar-section.html
+  Recursive partial for rendering a single navigation section in the
+  data-driven sidebar. Each call renders one section node with:
+    - <details>/<summary> for collapsibility
+    - Depth-aware CSS class for nesting indentation
+    - Page links with active-page highlighting
+    - Recursive descent into child sections
+
+  Context (dict):
+    .section    — navSection object from navigation.json
+    .depth      — current nesting depth (starts at 1)
+    .currentURL — the current page's .RelPermalink for active highlighting
+*/ -}}
+
+{{- $section := .section -}}
+{{- $depth := .depth -}}
+{{- $currentURL := .currentURL -}}
+
+<details class="sidebar-section sidebar-depth-{{ $depth }}"{{ if not $section.collapsed }} open{{ end }}>
+  <summary class="sidebar-section-title">
+    {{- with $section.path -}}
+      <a href="{{ . }}">{{ $section.title }}</a>
+    {{- else -}}
+      {{ $section.title }}
+    {{- end -}}
+  </summary>
+
+  {{- if $section.pages -}}
+    <ul class="sidebar-list">
+      {{- range $section.pages -}}
+        <li class="sidebar-item{{ if eq .path $currentURL }} active{{ end }}">
+          <a href="{{ .path }}" class="sidebar-link">
+            <span class="sidebar-link-text">{{ .title }}</span>
+          </a>
+        </li>
+      {{- end -}}
+    </ul>
+  {{- end -}}
+
+  {{- range $section.children -}}
+    {{- partial "sidebar-section.html" (dict "section" . "depth" (add $depth 1) "currentURL" $currentURL) -}}
+  {{- end -}}
+</details>

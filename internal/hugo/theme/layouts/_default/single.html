@@ -9,6 +9,9 @@
       <h1 class="rule-title" data-pagefind-meta="title">{{ .Title }}</h1>
       {{- partial "severity-badge.html" ($p.level | default "suggestion") -}}
       <span data-pagefind-filter="severity" hidden>{{ $p.level | default "suggestion" }}</span>
+      <span data-pagefind-meta="severity:{{ $p.level | default "suggestion" }}, type:{{ $p.extends }}" hidden></span>
+      {{- /* Forward-planted for rule/guideline distinction once guidelines ship */ -}}
+      <span data-pagefind-filter="content_type:rule" hidden></span>
     </div>
 
     <div class="rule-meta">
@@ -43,7 +46,7 @@
     {{- /* Human-readable message with %s replaced */ -}}
     {{- with $p.message -}}
       {{- $display := . | replaceRE `'?%s'?` "<em class=\"matched-text\">[matched text]</em>" -}}
-      <p class="rule-message">{{ $display | safeHTML }}</p>
+      <p class="rule-message" data-pagefind-weight="2">{{ $display | safeHTML }}</p>
     {{- end -}}
   </header>
 
@@ -62,7 +65,7 @@
   {{- /* Technical details: original message template */ -}}
   {{- with $p.message -}}
     {{- if strings.Contains . "%" -}}
-      <details class="technical-details">
+      <details class="technical-details" data-pagefind-weight="0.5">
         <summary>Technical Details</summary>
         <dl class="detail-list">
           <dt>Message template</dt>
