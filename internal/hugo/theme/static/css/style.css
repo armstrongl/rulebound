@@ -881,6 +881,12 @@ em.matched-text {
   margin-top: 0.25rem;
 }
 
+/* ── Pages divider (separates rules from page sections) ──── */
+.sidebar-pages-divider {
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 0.25rem;
+}
+
 /* ── Data-driven sidebar sections ────────────────────────── */
 .sidebar-section {
   border: none;

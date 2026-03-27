@@ -35,30 +35,18 @@
     {{- /* ── Mode 1: Data-driven sidebar from navigation.json ───── */ -}}
 
     {{- $currentURL := $.RelPermalink -}}
-    {{- $rulesPos := int .rules_section.position -}}
     {{- $sections := .sections -}}
     {{- $rulesSection := .rules_section -}}
 
-    {{- /* Render rules section at position 0 (before all sections) */ -}}
-    {{- if eq $rulesPos 0 -}}
-      {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
-    {{- end -}}
+    {{- /* Rules always render first */ -}}
+    {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
 
-    {{- range $i, $section := $sections -}}
-
-      {{- /* Render the page section */ -}}
-      {{- partial "sidebar-section.html" (dict "section" $section "depth" 1 "currentURL" $currentURL) -}}
-
-      {{- /* Render rules section after this section if position matches (1-indexed) */ -}}
-      {{- if eq $rulesPos (add $i 1) -}}
-        {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
+    {{- /* Page sections render below, visually separated */ -}}
+    {{- if gt (len $sections) 0 -}}
+      <div class="sidebar-pages-divider"></div>
+      {{- range $sections -}}
+        {{- partial "sidebar-section.html" (dict "section" . "depth" 1 "currentURL" $currentURL) -}}
       {{- end -}}
-
-    {{- end -}}
-
-    {{- /* Render rules section at the end if position is -1 (default/bottom) */ -}}
-    {{- if eq $rulesPos -1 -}}
-      {{- partial "sidebar-rules-section.html" (dict "rulesSection" $rulesSection "currentURL" $currentURL) -}}
     {{- end -}}
 
   {{- else -}}

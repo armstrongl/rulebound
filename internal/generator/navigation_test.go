@@ -619,6 +619,55 @@ func TestGenerateNavigationJSON_RulePathDerivedFromName(t *testing.T) {
 	if rule["path"] != "/rules/headingpunctuation/" {
 		t.Errorf("rule path = %v, want /rules/headingpunctuation/", rule["path"])
 	}
+	if rule["level"] != "warning" {
+		t.Errorf("rule level = %v, want warning", rule["level"])
+	}
+}
+
+func TestGenerateNavigationJSON_RuleLevelIncluded(t *testing.T) {
+	dataDir := t.TempDir()
+
+	tree := &parser.SectionTree{
+		Name:  "pages",
+		Title: "Pages",
+		Path:  "/pages/",
+		Children: []*parser.SectionTree{
+			{Name: "language", Title: "Language", Path: "/pages/language/",
+				Pages: []*parser.Page{{Title: "Voice", Path: "/pages/language/voice/"}}},
+		},
+	}
+
+	rules := []*parser.ValeRule{
+		{Name: "Avoid", Extends: "existence", Level: "error", Category: "Style"},
+		{Name: "Terms", Extends: "substitution", Level: "suggestion", Category: "Style"},
+	}
+	categories := map[string][]string{"Style": {"Avoid", "Terms"}}
+
+	if err := generator.GenerateNavigationJSON(tree, rules, categories, dataDir); err != nil {
+		t.Fatalf("GenerateNavigationJSON: %v", err)
+	}
+
+	data := readFile(t, filepath.Join(dataDir, "navigation.json"))
+	var nav map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &nav); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	rulesSection := nav["rules_section"].(map[string]interface{})
+	cats := rulesSection["categories"].([]interface{})
+	cat := cats[0].(map[string]interface{})
+	navRules := cat["rules"].([]interface{})
+
+	// Rules are sorted alphabetically: Avoid, Terms
+	avoidRule := navRules[0].(map[string]interface{})
+	if avoidRule["level"] != "error" {
+		t.Errorf("Avoid level = %v, want error", avoidRule["level"])
+	}
+
+	termsRule := navRules[1].(map[string]interface{})
+	if termsRule["level"] != "suggestion" {
+		t.Errorf("Terms level = %v, want suggestion", termsRule["level"])
+	}
 }
 
 func TestGenerateNavigationJSON_CollapsedSection(t *testing.T) {

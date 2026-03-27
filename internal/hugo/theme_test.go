@@ -252,22 +252,23 @@ func TestSidebarHTML_DualModeStructure(t *testing.T) {
 	}
 }
 
-// TestSidebarHTML_RulesPositionInterleaving verifies the sidebar template
-// handles rules_section.position for interleaving rules among page sections.
-func TestSidebarHTML_RulesPositionInterleaving(t *testing.T) {
+// TestSidebarHTML_RulesFirstThenPages verifies the sidebar template renders
+// rules first, then page sections below with a visual divider.
+func TestSidebarHTML_RulesFirstThenPages(t *testing.T) {
 	data, err := themeFS.ReadFile("theme/layouts/partials/sidebar.html")
 	if err != nil {
 		t.Fatalf("reading sidebar.html: %v", err)
 	}
 	content := string(data)
 
-	// sidebar.html must reference position and delegate to the rules partial.
+	// sidebar.html must call rules partial and page section partial.
 	sidebarMustContain := []struct {
 		substr string
 		reason string
 	}{
-		{`.rules_section.position`, "must reference rules position for interleaving"},
 		{`sidebar-rules-section.html`, "must call the rules section partial"},
+		{`sidebar-pages-divider`, "must have divider between rules and page sections"},
+		{`sidebar-section.html`, "must call page section partial"},
 	}
 	for _, tc := range sidebarMustContain {
 		if !strings.Contains(content, tc.substr) {
@@ -275,7 +276,7 @@ func TestSidebarHTML_RulesPositionInterleaving(t *testing.T) {
 		}
 	}
 
-	// sidebar-rules-section.html must render categories and title.
+	// sidebar-rules-section.html must render categories with flat headers and severity dots.
 	rulesData, err := themeFS.ReadFile("theme/layouts/partials/sidebar-rules-section.html")
 	if err != nil {
 		t.Fatalf("reading sidebar-rules-section.html: %v", err)
@@ -287,7 +288,10 @@ func TestSidebarHTML_RulesPositionInterleaving(t *testing.T) {
 		reason string
 	}{
 		{`$rulesSection.categories`, "must iterate rule categories"},
-		{`$rulesSection.title`, "must render rules section title"},
+		{`sidebar-group`, "must use flat sidebar-group divs for categories"},
+		{`sidebar-group-title`, "must use sidebar-group-title for category headers"},
+		{`severity-dot`, "must render severity dots for rules"},
+		{`.level`, "must access rule level for severity dot"},
 	}
 	for _, tc := range rulesMustContain {
 		if !strings.Contains(rulesContent, tc.substr) {

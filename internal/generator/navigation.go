@@ -53,6 +53,7 @@ type navCategory struct {
 type navRule struct {
 	Title string `json:"title"`
 	Path  string `json:"path"`
+	Level string `json:"level,omitempty"`
 }
 
 // ── Public functions ─────────────────────────────────────────────────────────
@@ -220,6 +221,7 @@ func buildRulesSection(pages *parser.SectionTree, rules []*parser.ValeRule, cate
 			navRules = append(navRules, navRule{
 				Title: DisplayName(r.Name),
 				Path:  "/rules/" + strings.ToLower(r.Name) + "/",
+				Level: r.Level,
 			})
 		}
 
