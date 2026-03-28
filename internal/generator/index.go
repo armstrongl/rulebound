@@ -40,6 +40,7 @@ type siteStats struct {
 	ByCategory             map[string]int `json:"by_category"`
 	GuidelinesCount        int            `json:"guidelines_count,omitempty"`
 	GuidelinesSectionTitle string         `json:"guidelines_section_title,omitempty"`
+	ResourceLinks          []resourceLink `json:"resource_links"`
 }
 
 // generateHomepageIndex writes content/_index.md.
@@ -95,7 +96,7 @@ func generateRulesIndex(rules []*parser.ValeRule, rulesDir string) error {
 }
 
 // generateSiteJSON writes data/site.json with aggregated statistics.
-func generateSiteJSON(rules []*parser.ValeRule, guidelinesCount int, sectionTitle string, dataDir string) error {
+func generateSiteJSON(rules []*parser.ValeRule, guidelinesCount int, sectionTitle string, links []resourceLink, dataDir string) error {
 	byType, bySeverity, byCategory := aggregateCounts(rules)
 
 	stats := siteStats{
@@ -104,6 +105,7 @@ func generateSiteJSON(rules []*parser.ValeRule, guidelinesCount int, sectionTitl
 		BySeverity:      bySeverity,
 		ByCategory:      byCategory,
 		GuidelinesCount: guidelinesCount,
+		ResourceLinks:   links,
 	}
 	if sectionTitle != "" {
 		stats.GuidelinesSectionTitle = sectionTitle

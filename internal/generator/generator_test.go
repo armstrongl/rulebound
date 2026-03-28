@@ -1084,6 +1084,137 @@ func TestGenerateSite_WithEmptyPages_GuidelinesRun(t *testing.T) {
 	}
 }
 
+// ── Resources ──────────────────────────────────────────────────────────────
+
+func TestGenerateSite_SiteJSON_ContainsDefaultResourceLinks(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	data := readFile(t, filepath.Join(outDir, "data", "site.json"))
+	var stats map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &stats); err != nil {
+		t.Fatalf("site.json is not valid JSON: %v", err)
+	}
+
+	links, ok := stats["resource_links"].([]interface{})
+	if !ok {
+		t.Fatal("site.json missing resource_links array")
+	}
+	if len(links) != 3 {
+		t.Fatalf("resource_links length = %d, want 3 defaults", len(links))
+	}
+
+	// Verify first default is Vale
+	first := links[0].(map[string]interface{})
+	if first["label"] != "Vale" {
+		t.Errorf("first default label = %v, want 'Vale'", first["label"])
+	}
+	if first["url"] != "https://vale.sh" {
+		t.Errorf("first default url = %v, want 'https://vale.sh'", first["url"])
+	}
+}
+
+func TestGenerateSite_SiteJSON_ExtraLinksAppended(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{
+		Title:   "Test Guide",
+		BaseURL: "/",
+		Resources: config.ResourcesConfig{
+			ExtraLinks: []config.ResourceLink{
+				{Label: "Custom", URL: "https://example.com", Description: "A custom link"},
+			},
+		},
+	}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	data := readFile(t, filepath.Join(outDir, "data", "site.json"))
+	var stats map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &stats); err != nil {
+		t.Fatalf("site.json is not valid JSON: %v", err)
+	}
+
+	links := stats["resource_links"].([]interface{})
+	if len(links) != 4 {
+		t.Fatalf("resource_links length = %d, want 4 (3 defaults + 1 custom)", len(links))
+	}
+
+	last := links[3].(map[string]interface{})
+	if last["label"] != "Custom" {
+		t.Errorf("last link label = %v, want 'Custom'", last["label"])
+	}
+}
+
+func TestGenerateSite_ResourcesPage_Created(t *testing.T) {
+	outDir := t.TempDir()
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{Title: "Test Guide", BaseURL: "/"}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	indexPath := filepath.Join(outDir, "content", "resources", "_index.md")
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		t.Error("expected content/resources/_index.md to exist")
+	}
+
+	content := readFile(t, indexPath)
+	if !strings.Contains(content, "type: resources") {
+		t.Errorf("resources _index.md missing type: resources: %s", content)
+	}
+	if !strings.Contains(content, "title: Resources") {
+		t.Errorf("resources _index.md missing title: %s", content)
+	}
+}
+
+func TestGenerateSite_ResourcesPage_Suppressed(t *testing.T) {
+	outDir := t.TempDir()
+	disabled := false
+	result := &parser.ParseResult{
+		Rules: []*parser.ValeRule{makeRule("Avoid", "existence", "error")},
+	}
+	cfg := &config.Config{
+		Title:     "Test Guide",
+		BaseURL:   "/",
+		Resources: config.ResourcesConfig{Enabled: &disabled},
+	}
+
+	if err := generator.GenerateSite(result, cfg, outDir); err != nil {
+		t.Fatalf("GenerateSite: %v", err)
+	}
+
+	// Page should not exist
+	indexPath := filepath.Join(outDir, "content", "resources", "_index.md")
+	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
+		t.Error("content/resources/_index.md should not exist when resources.enabled is false")
+	}
+
+	// But site.json should still have resource_links (footer needs them)
+	data := readFile(t, filepath.Join(outDir, "data", "site.json"))
+	var stats map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &stats); err != nil {
+		t.Fatalf("site.json is not valid JSON: %v", err)
+	}
+	if _, ok := stats["resource_links"]; !ok {
+		t.Error("site.json should still contain resource_links even when page is disabled")
+	}
+}
+
 // ── CountPages ────────────────────────────────────────────────────────────────
 
 func TestCountPages_NilTree(t *testing.T) {
