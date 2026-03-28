@@ -145,8 +145,19 @@ func GenerateSite(result *parser.ParseResult, cfg *config.Config, outputDir stri
 		return err
 	}
 
-	// data/site.json
-	if err := generateSiteJSON(rules, guidelinesCount, sectionTitle, dataDir); err != nil {
+	// ── Resources ────────────────────────────────────────────────────────
+	resourceLinks := buildResourceLinks(cfg)
+
+	// Resources page (unless explicitly disabled).
+	resourcesEnabled := cfg.Resources.Enabled == nil || *cfg.Resources.Enabled
+	if resourcesEnabled {
+		if err := generateResourcesPage(outputDir); err != nil {
+			return err
+		}
+	}
+
+	// data/site.json (always includes resource links for footer)
+	if err := generateSiteJSON(rules, guidelinesCount, sectionTitle, resourceLinks, dataDir); err != nil {
 		return err
 	}
 

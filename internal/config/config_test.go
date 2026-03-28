@@ -359,6 +359,93 @@ pages:
 	}
 }
 
+// ── Resources config tests ──────────────────────────────────────────────────
+
+func TestLoadResourcesConfig_WithExtraLinks(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: My Style Guide
+baseURL: /
+resources:
+  extra_links:
+    - label: Microsoft Style Guide
+      url: https://github.com/vale-cli/Microsoft
+      description: Vale implementation of the Microsoft Writing Style Guide
+    - label: Google Style Guide
+      url: https://github.com/vale-cli/Google
+      description: Vale implementation of the Google Developer Documentation Style Guide
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if len(cfg.Resources.ExtraLinks) != 2 {
+		t.Fatalf("ExtraLinks length = %d, want 2", len(cfg.Resources.ExtraLinks))
+	}
+	if cfg.Resources.ExtraLinks[0].Label != "Microsoft Style Guide" {
+		t.Errorf("ExtraLinks[0].Label = %q, want %q", cfg.Resources.ExtraLinks[0].Label, "Microsoft Style Guide")
+	}
+	if cfg.Resources.ExtraLinks[0].URL != "https://github.com/vale-cli/Microsoft" {
+		t.Errorf("ExtraLinks[0].URL = %q, want %q", cfg.Resources.ExtraLinks[0].URL, "https://github.com/vale-cli/Microsoft")
+	}
+	if cfg.Resources.ExtraLinks[0].Description != "Vale implementation of the Microsoft Writing Style Guide" {
+		t.Errorf("ExtraLinks[0].Description = %q", cfg.Resources.ExtraLinks[0].Description)
+	}
+	if cfg.Resources.ExtraLinks[1].Label != "Google Style Guide" {
+		t.Errorf("ExtraLinks[1].Label = %q, want %q", cfg.Resources.ExtraLinks[1].Label, "Google Style Guide")
+	}
+}
+
+func TestLoadResourcesConfig_DefaultsWhenAbsent(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: No Resources Config
+baseURL: /
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Resources.Enabled != nil {
+		t.Errorf("Resources.Enabled should be nil (unset), got %v", *cfg.Resources.Enabled)
+	}
+	if len(cfg.Resources.ExtraLinks) != 0 {
+		t.Errorf("ExtraLinks should be empty, got %v", cfg.Resources.ExtraLinks)
+	}
+}
+
+func TestLoadResourcesConfig_ExplicitlyDisabled(t *testing.T) {
+	dir := t.TempDir()
+	yml := `title: Disabled Resources
+baseURL: /
+resources:
+  enabled: false
+`
+	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Resources.Enabled == nil {
+		t.Fatal("Resources.Enabled should not be nil")
+	}
+	if *cfg.Resources.Enabled {
+		t.Error("Resources.Enabled should be false")
+	}
+}
+
 func TestLoadExistingFieldsStillWork(t *testing.T) {
 	dir := t.TempDir()
 	yml := `title: Full Config
@@ -372,6 +459,11 @@ pages:
 guidelines:
   section_title: Editorial
   enabled: true
+resources:
+  extra_links:
+    - label: Custom Link
+      url: https://example.com/custom
+      description: A custom resource
 `
 	if err := os.WriteFile(filepath.Join(dir, "rulebound.yml"), []byte(yml), 0o644); err != nil {
 		t.Fatalf("setup: %v", err)
@@ -399,5 +491,11 @@ guidelines:
 	}
 	if cfg.Guidelines.SectionTitle != "Editorial" {
 		t.Errorf("Guidelines.SectionTitle = %q, want %q", cfg.Guidelines.SectionTitle, "Editorial")
+	}
+	if len(cfg.Resources.ExtraLinks) != 1 {
+		t.Fatalf("Resources.ExtraLinks length = %d, want 1", len(cfg.Resources.ExtraLinks))
+	}
+	if cfg.Resources.ExtraLinks[0].Label != "Custom Link" {
+		t.Errorf("Resources.ExtraLinks[0].Label = %q, want %q", cfg.Resources.ExtraLinks[0].Label, "Custom Link")
 	}
 }

@@ -3,3 +3,8 @@ description: Documentation standards for technical writing teams
 baseURL: /
 pages:
   enabled: true
+resources:
+  extra_links:
+    - label: Google Developer Documentation Style Guide
+      url: https://developers.google.com/style
+      description: Google's comprehensive style guide for developer documentation

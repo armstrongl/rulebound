@@ -1,0 +1,24 @@
+{{- define "main" -}}
+{{- $data := index hugo.Data "site" -}}
+
+<div class="resources-page" data-pagefind-body>
+  <h1>{{ .Title | default "Resources" }}</h1>
+  <p class="resources-intro">Tools, documentation, and community projects from the Vale ecosystem.</p>
+
+  {{- with $data.resource_links -}}
+  <ul class="resources-list">
+    {{- range . -}}
+    <li class="resources-item">
+      <a href="{{ .url }}" class="resources-link" target="_blank" rel="noopener noreferrer">
+        <span class="resources-label">{{ .label }}</span>
+        {{- with .description -}}
+          <span class="resources-desc">{{ . }}</span>
+        {{- end -}}
+      </a>
+    </li>
+    {{- end -}}
+  </ul>
+  {{- end -}}
+</div>
+
+{{- end -}}
