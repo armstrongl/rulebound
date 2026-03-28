@@ -143,6 +143,24 @@ The following fields are available:
 | `guidelines.order` | Alphabetical | Page ordering by filename stem. Items listed in `order` take precedence over frontmatter `weight` values. |
 | `guidelines.exclude` | (none) | Filename stems to skip. Takes precedence over `order`. |
 | `guidelines.enabled` | `true` | Set to `false` to suppress guideline generation even when files exist |
+| `resources.enabled` | `true` | Set to `false` to suppress the `/resources/` page |
+| `resources.extra_links` | (none) | Additional resource links to display on the resources page (see example below) |
+
+### Custom resource links
+
+Every generated site includes a `/resources/` page linking to the Vale ecosystem (Vale docs, Vale Studio, Vale on GitHub). Package authors can add custom links:
+
+```yaml
+resources:
+  extra_links:
+    - label: Microsoft Writing Style Guide
+      url: https://github.com/vale-cli/Microsoft
+      description: Vale implementation of the Microsoft Writing Style Guide
+    - label: Our internal style guide
+      url: https://wiki.example.com/style
+```
+
+Set `resources.enabled: false` to suppress the resources page entirely. Footer links (Vale, Vale Studio) appear regardless.
 
 ## How it works
 
@@ -318,6 +336,14 @@ rulebound returns the following exit codes:
 | 2    | Configuration error               |
 | 3    | Hugo not found or version too old |
 | 4    | Hugo build failure                |
+
+## Vale resources
+
+rulebound generates documentation for Vale packages. Learn more about Vale:
+
+- [Vale](https://vale.sh) -- A linter for prose, built with speed and extensibility in mind
+- [Vale Studio](https://studio.vale.sh) -- Test and debug Vale rules in the browser
+- [Vale on GitHub](https://github.com/vale-cli/vale) -- Source code, issues, and releases
 
 ## Project structure
 
