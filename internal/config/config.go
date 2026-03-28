@@ -33,6 +33,9 @@ type Config struct {
 
 	// Pages controls how content pages are processed.
 	Pages PagesConfig `yaml:"pages"`
+
+	// Resources controls the resources page and footer ecosystem links.
+	Resources ResourcesConfig `yaml:"resources"`
 }
 
 // GuidelinesConfig controls how the build processes editorial guidelines.
@@ -51,6 +54,24 @@ type GuidelinesConfig struct {
 type PagesConfig struct {
 	// Enabled controls auto-detection of the pages/ directory. Default: true (nil means true).
 	Enabled *bool `yaml:"enabled"`
+}
+
+// ResourceLink represents a single external resource link.
+type ResourceLink struct {
+	// Label is the display text for the link.
+	Label string `yaml:"label"`
+	// URL is the link target.
+	URL string `yaml:"url"`
+	// Description is an optional short description shown on the resources page.
+	Description string `yaml:"description"`
+}
+
+// ResourcesConfig controls the resources page and footer links.
+type ResourcesConfig struct {
+	// Enabled controls whether the /resources/ page is generated. Default: true (nil means true).
+	Enabled *bool `yaml:"enabled"`
+	// ExtraLinks are additional resource links provided by the package author.
+	ExtraLinks []ResourceLink `yaml:"extra_links"`
 }
 
 // Load reads and parses the rulebound.yml file located in packageDir.
