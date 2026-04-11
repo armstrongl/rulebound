@@ -1,0 +1,5 @@
+extends: occurrence
+message: "test"
+level: warning
+min: 0
+token: '\S+'

@@ -1,0 +1,3 @@
+extends: script
+message: "test"
+level: warning

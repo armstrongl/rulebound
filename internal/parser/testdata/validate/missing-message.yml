@@ -1,0 +1,4 @@
+extends: substitution
+level: warning
+swap:
+  leverage: use

@@ -1,0 +1,6 @@
+extends: substitution
+message: "Prefer '%s' over '%s'."
+level: warning
+swap:
+  leverage: use
+  utilize: use

@@ -1,0 +1,6 @@
+extends: existence
+message: "'%s' is deprecated."
+level: warning
+tokens:
+  - leverage
+  - utilize
