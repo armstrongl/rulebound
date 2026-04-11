@@ -1,0 +1,10 @@
+extends: capitalization
+message: '''%s'' should be sentence-cased.'
+level: warning
+match: $sentence
+exceptions:
+    - iOS
+    - macOS
+    - API
+    - UI
+    - GraphQL

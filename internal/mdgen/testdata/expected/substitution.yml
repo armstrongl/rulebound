@@ -1,0 +1,10 @@
+extends: substitution
+message: Prefer '%s' over '%s'.
+level: warning
+ignorecase: true
+swap:
+    leverage: use
+    utilize: use
+    functionality: feature
+    in order to: to
+    at this point in time: now
