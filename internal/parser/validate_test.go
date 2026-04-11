@@ -306,6 +306,96 @@ func TestValidateRule_RealRules(t *testing.T) {
 	}
 }
 
+func TestValidateRuleBytes_SwapNonStringValues(t *testing.T) {
+	content := "extends: substitution\nmessage: test\nlevel: warning\nswap:\n  foo: 123\n"
+	errs, err := parser.ValidateRuleBytes([]byte(content))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	found := false
+	for _, ve := range errs {
+		if ve.Field == "swap" && strings.Contains(ve.Message, "string") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected error for non-string swap value, got: %+v", errs)
+	}
+}
+
+func TestValidateRuleBytes_SwapSequenceNonMapping(t *testing.T) {
+	content := "extends: substitution\nmessage: test\nlevel: warning\nswap:\n  - notamap\n"
+	errs, err := parser.ValidateRuleBytes([]byte(content))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	found := false
+	for _, ve := range errs {
+		if ve.Field == "swap" && strings.Contains(ve.Message, "mapping") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected error for non-mapping swap item, got: %+v", errs)
+	}
+}
+
+func TestValidateRuleBytes_OccurrenceNonIntMax(t *testing.T) {
+	content := "extends: occurrence\nmessage: test\nlevel: warning\nmax: foo\ntoken: '\\S+'\n"
+	errs, err := parser.ValidateRuleBytes([]byte(content))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	found := false
+	for _, ve := range errs {
+		if ve.Field == "max" && strings.Contains(ve.Message, "integer") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected error for non-integer max, got: %+v", errs)
+	}
+}
+
+func TestValidateRuleBytes_OccurrenceNonStringToken(t *testing.T) {
+	content := "extends: occurrence\nmessage: test\nlevel: warning\nmax: 10\ntoken: 123\n"
+	errs, err := parser.ValidateRuleBytes([]byte(content))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	found := false
+	for _, ve := range errs {
+		if ve.Field == "token" && strings.Contains(ve.Message, "non-empty string") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected error for non-string token, got: %+v", errs)
+	}
+}
+
+func TestExtractFrontmatter_EmptyFrontmatter(t *testing.T) {
+	data := []byte("---\n---\nBody here.\n")
+	fm, body, err := parser.ExtractFrontmatter(data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(fm) != 0 {
+		t.Errorf("expected empty frontmatter, got %q", fm)
+	}
+	if string(body) != "Body here.\n" {
+		t.Errorf("body: got %q", body)
+	}
+}
+
 // writeTestFile is a helper that writes content to a file, returning any error.
 func writeTestFile(t *testing.T, path, content string) error {
 	t.Helper()

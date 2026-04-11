@@ -301,7 +301,7 @@ func TestEmitYAML_RoundTrip_Substitution(t *testing.T) {
 	}
 }
 
-// ── Swap order verification ───────────────────────────────────────────────��
+// ── Swap order verification ────────────────────────────────────────────────
 
 func TestEmitYAML_SwapOrder(t *testing.T) {
 	src := &mdgen.RuleSource{
@@ -335,7 +335,7 @@ func TestEmitYAML_SwapOrder(t *testing.T) {
 	}
 }
 
-// ── Helpers ──────────────────────────────────��─────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 func goldenTest(t *testing.T, inputFile, goldenFile string) {
 	t.Helper()

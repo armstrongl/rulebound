@@ -226,13 +226,12 @@ func TestParseMarkdown_CRLF(t *testing.T) {
 // ── Edge cases ─────────────────────────────────────────────────────────────
 
 func TestParseMarkdown_EmptySwapBlock(t *testing.T) {
-	src, _, err := mdgen.ParseMarkdown(readTestdata(t, "empty-swap.md"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, _, err := mdgen.ParseMarkdown(readTestdata(t, "empty-swap.md"))
+	if err == nil {
+		t.Fatal("expected error for empty swap block")
 	}
-
-	if len(src.Swap) != 0 {
-		t.Errorf("Swap: got %d pairs, want 0", len(src.Swap))
+	if !strings.Contains(err.Error(), "at least one entry") {
+		t.Errorf("error should mention empty swap block: %v", err)
 	}
 }
 

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/armstrongl/rulebound/internal/parser"
@@ -10,11 +11,13 @@ import (
 
 // validateCmd defines the `rulebound validate` sub-command.
 var validateCmd = &cobra.Command{
-	Use:   "validate <file.yml> [file2.yml ...]",
+	Use:   "validate <file.yml> [file2.yml ...] | validate -",
 	Short: "Validate Vale YAML rule files for structural errors",
 	Long: `validate reads one or more Vale rule YAML files and reports structural
 errors: missing required fields, invalid extends values, and rule-type-specific
 field errors — without invoking Hugo.
+
+Use '-' to read YAML from stdin (e.g. rulebound generate foo.md -o - | rulebound validate -).
 
 Exit code 0 if all files are valid, 1 if any file has errors.`,
 	Args: cobra.MinimumNArgs(1),
@@ -30,7 +33,22 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			fmt.Printf("Validating: %s\n", path)
 		}
 
-		errs, err := parser.ValidateRule(path)
+		var errs []parser.ValidationError
+		var err error
+
+		if path == "-" {
+			data, readErr := io.ReadAll(os.Stdin)
+			if readErr != nil {
+				fmt.Fprintf(os.Stderr, "<stdin>: %v\n", readErr)
+				totalErrors++
+				continue
+			}
+			errs, err = parser.ValidateRuleBytes(data)
+			path = "<stdin>"
+		} else {
+			errs, err = parser.ValidateRule(path)
+		}
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
 			totalErrors++

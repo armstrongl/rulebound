@@ -42,10 +42,15 @@ func ValidateRule(path string) ([]ValidationError, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
+	return ValidateRuleBytes(data)
+}
 
+// ValidateRuleBytes validates raw YAML bytes as a Vale rule. It performs the
+// same structural checks as ValidateRule but without reading from disk.
+func ValidateRuleBytes(data []byte) ([]ValidationError, error) {
 	var m map[string]interface{}
 	if err := yaml.Unmarshal(data, &m); err != nil {
-		return nil, fmt.Errorf("parsing %s: %w", path, err)
+		return nil, fmt.Errorf("parsing YAML: %w", err)
 	}
 
 	var errs []ValidationError
@@ -151,6 +156,16 @@ func validateSubstitution(m map[string]interface{}) []ValidationError {
 				Message:  "substitution rule requires a non-empty 'swap' map",
 				Severity: "error",
 			})
+		} else {
+			for key, val := range v {
+				if _, ok := val.(string); !ok {
+					errs = append(errs, ValidationError{
+						Field:    "swap",
+						Message:  fmt.Sprintf("swap value for key %q must be a string, got %T", key, val),
+						Severity: "error",
+					})
+				}
+			}
 		}
 	case []interface{}:
 		if len(v) == 0 {
@@ -159,6 +174,27 @@ func validateSubstitution(m map[string]interface{}) []ValidationError {
 				Message:  "substitution rule requires a non-empty 'swap' map",
 				Severity: "error",
 			})
+		} else {
+			for i, item := range v {
+				m, ok := item.(map[string]interface{})
+				if !ok {
+					errs = append(errs, ValidationError{
+						Field:    "swap",
+						Message:  fmt.Sprintf("swap item [%d] must be a mapping, got %T", i, item),
+						Severity: "error",
+					})
+					continue
+				}
+				for key, val := range m {
+					if _, ok := val.(string); !ok {
+						errs = append(errs, ValidationError{
+							Field:    "swap",
+							Message:  fmt.Sprintf("swap value for key %q must be a string, got %T", key, val),
+							Severity: "error",
+						})
+					}
+				}
+			}
 		}
 	default:
 		errs = append(errs, ValidationError{
@@ -209,8 +245,8 @@ func validateExistence(m map[string]interface{}) []ValidationError {
 func validateOccurrence(m map[string]interface{}) []ValidationError {
 	var errs []ValidationError
 
-	_, hasMax := m["max"]
-	_, hasMin := m["min"]
+	maxVal, hasMax := m["max"]
+	minVal, hasMin := m["min"]
 	if !hasMax && !hasMin {
 		errs = append(errs, ValidationError{
 			Field:    "max/min",
@@ -218,11 +254,36 @@ func validateOccurrence(m map[string]interface{}) []ValidationError {
 			Severity: "error",
 		})
 	}
+	if hasMax {
+		if _, ok := maxVal.(int); !ok {
+			errs = append(errs, ValidationError{
+				Field:    "max",
+				Message:  fmt.Sprintf("'max' must be an integer, got %T", maxVal),
+				Severity: "error",
+			})
+		}
+	}
+	if hasMin {
+		if _, ok := minVal.(int); !ok {
+			errs = append(errs, ValidationError{
+				Field:    "min",
+				Message:  fmt.Sprintf("'min' must be an integer, got %T", minVal),
+				Severity: "error",
+			})
+		}
+	}
 
-	if _, hasToken := m["token"]; !hasToken {
+	tokenVal, hasToken := m["token"]
+	if !hasToken {
 		errs = append(errs, ValidationError{
 			Field:    "token",
 			Message:  "occurrence rule requires a 'token' field",
+			Severity: "error",
+		})
+	} else if tokenStr, ok := tokenVal.(string); !ok || strings.TrimSpace(tokenStr) == "" {
+		errs = append(errs, ValidationError{
+			Field:    "token",
+			Message:  "field 'token' must be a non-empty string",
 			Severity: "error",
 		})
 	}

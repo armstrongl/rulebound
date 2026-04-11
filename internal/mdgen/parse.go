@@ -143,6 +143,9 @@ func ParseMarkdown(data []byte) (*RuleSource, []Warning, error) {
 			return nil, nil, fmt.Errorf("parsing vale-swap block: %w", err)
 		}
 		warnings = append(warnings, swapWarnings...)
+		if len(pairs) == 0 {
+			return nil, nil, fmt.Errorf("substitution rule requires at least one entry in the ```vale-swap``` block")
+		}
 		src.Swap = pairs
 
 	case parser.ExtendsExistence:
@@ -150,7 +153,11 @@ func ParseMarkdown(data []byte) (*RuleSource, []Warning, error) {
 		if !ok {
 			return nil, nil, fmt.Errorf("existence rule requires a ```vale-tokens``` fenced block")
 		}
-		src.Tokens = parseLineBlock(tokenBlock)
+		tokens := parseLineBlock(tokenBlock)
+		if len(tokens) == 0 {
+			return nil, nil, fmt.Errorf("existence rule requires at least one token in the ```vale-tokens``` block")
+		}
+		src.Tokens = tokens
 
 	case parser.ExtendsOccurrence:
 		// max, min, token come from frontmatter (already in Fields).
