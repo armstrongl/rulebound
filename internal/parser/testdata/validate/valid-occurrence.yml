@@ -1,0 +1,5 @@
+extends: occurrence
+message: "Too many words."
+level: suggestion
+max: 30
+token: '\S+'

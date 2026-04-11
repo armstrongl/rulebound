@@ -1,0 +1,5 @@
+extends: existence
+message: "test"
+level: critical
+tokens:
+  - foo

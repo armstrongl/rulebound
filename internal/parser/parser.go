@@ -46,6 +46,11 @@ var knownFields = map[string]bool{
 	"filters":      true,
 }
 
+// IsKnownField reports whether name is a recognised Vale rule YAML key.
+func IsKnownField(name string) bool {
+	return knownFields[name]
+}
+
 // rawRule is the intermediate YAML representation used during parsing.
 // Several fields use custom unmarshalers to handle Vale's polymorphic YAML
 // syntax (action, swap, scope, tokens).
