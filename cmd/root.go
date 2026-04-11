@@ -38,6 +38,20 @@ Usage example:
 	SilenceErrors: true,
 }
 
+// exitError pairs an error with a specific exit code for the CLI.
+type exitError struct {
+	code int
+	err  error
+}
+
+func (e *exitError) Error() string {
+	return e.err.Error()
+}
+
+func (e *exitError) Unwrap() error {
+	return e.err
+}
+
 // Execute runs the root command and exits on failure.
 // An *exitError carries a specific exit code; other errors exit with ExitGeneral.
 func Execute() {
@@ -56,4 +70,6 @@ func init() {
 
 	// Add sub-commands.
 	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(generateCmd)
+	rootCmd.AddCommand(validateCmd)
 }

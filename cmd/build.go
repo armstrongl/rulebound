@@ -216,20 +216,6 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// exitError pairs an error with a specific exit code for the CLI.
-type exitError struct {
-	code int
-	err  error
-}
-
-func (e *exitError) Error() string {
-	return e.err.Error()
-}
-
-func (e *exitError) Unwrap() error {
-	return e.err
-}
-
 // guidelinesConfigHasNonDefaults returns true if the guidelines config has any
 // explicitly set value (Enabled pointer, section title, order list, or exclude list).
 func guidelinesConfigHasNonDefaults(cfg config.GuidelinesConfig) bool {
